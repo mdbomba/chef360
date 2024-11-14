@@ -16,28 +16,29 @@ grep -v 'jobStatus' $vars.1 > $vars.2
 grep -v 'runId' $vars.1 > $vars
 rm -rf $vars.*
 
-
-instanceId="$(chef-courier-cli state instance list-all --job-id $jobId  | jq .items | jq '.[]' | jq .id )"
-jobStatus="$(chef-courier-cli state instance list-all --job-id $jobId  | jq .items | jq '.[]' | jq .status | tr -d '"' )"
+jobStatus="$(chef-courier-cli state instance list-all --job-id $jobId  | jq -r '.items | .[] |.status' )"
+instanceId="$(chef-courier-cli state instance list-all --job-id $jobId  | jq -r ' .items | .[] | .id' )"
 runId="$(chef-courier-cli state instance list-instance-runs --instanceId $instanceId | jq .items | jq '.[]' | jq .runId)"
-chef-courier-cli state run list-steps --runId $runId
+
 
 echo "instanceId=$instanceId" >> $vars
 echo "jobStatus=$jobStatus" >> $vars
 echo "runId=$runId" >> $vars
-
-echo "Job Status - $jobStatus"
+echo ''
+echo "OVERALL JOB STATUS UPDATED EVERY 15 SECONDS"   
+echo "Job Name   = $jobName"
+echo "Job ID     = $jobId"
+echo "Job Status = $jobStatus"
+echo "Job Run ID = $runId"
 while [ ! "x$jobStatus" = "xsuccess" ] && [ ! "x$jobStatus" = "xfailure" ]
 do 
-    echo ''
-    echo "OVERALL JOB STATUS UPDATED EVERY 10 SECONDS"    sleep 10
+    sleep 15
     jobStatus="$(chef-courier-cli state instance list-all --job-id $jobId  | jq .items | jq '.[]' | jq .status | tr -d '"' )" 
     echo "Job Status - $jobStatus"
 done
-    echo ""
     echo "JOB INSTANCE DETAILS"
     
-    chef-courier-cli state run list-steps --runId $runId
+    chef-courier-cli state run list-steps --runId $runId | jq -rM '.items | .[] ' 
 
 
 # END OF SCRIPT

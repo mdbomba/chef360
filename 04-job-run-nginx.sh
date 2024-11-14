@@ -1,29 +1,45 @@
 vars="./chef360.vars"
 source $vars
-file="$./list-all-jobs.out"
-filename='./job-nginx.json'
-nodeip='10.0.0.9'
 
-jobName='100-courier-lab-nginx-6'
-jobDescription='Rolling Jobs'
-nodeId=$node_nodeId
-pwd=$(pwd)
+outFile="./job-out.json"
+inFile='./job-in.json'
 
-# CLEAN OUT OLD JOB NAMES AND IDS FROM VARS FILE
-grep -v 'jobName' $vars > $vars.1
-grep -v 'jobId' $vars.1 > $vars
-rm -rf $vars.1
+jobName='100-courier-lab-nginx-7'
+jobDesc='Rolling Jobs'
 
-chef-courier-cli scheduler jobs list-jobs | jq .items | jq '.[]' | jq .name | tr -d '"' > $file
-if grep "$jobName" $file ; then 
-    echo "Job with same name ($jobName) already exists. Exiting script"
-    exit
-fi
+jId=$(chef-courier-cli scheduler jobs list-jobs --pagination.size 10000 | jq -r --arg name "$jobName" '.items | .[] | select(.name==$name) | .id')
+echo "$jId"
+echo "$jobId"
 
-cat <<EOF > $filename
+if [ "$jId" = "$jobId" ]; then doit=1; echo 'match'; else doit=0; echo 'nomatch'; fi
+
+
+
+if [ $doit ]; then
+    echo "Rerunning existing job named $jobName"
+    # CLEAN OUT OLD JOB NAMES AND IDS FROM VARS FILE
+    grep -v 'jobName' $vars > $vars.1
+    grep -v 'jobId' $vars.1 > $vars.2
+    grep -v 'jobStatus' $vars.2 > $vars.3
+    grep -v 'instanceId' $vars.3 > $vars.4
+    grep -v 'runId' $vars.4 > $vars
+    rm -rf $vars.*
+    chef-courier-cli scheduler jobs activated-job --jobId "$jId" | jq | tee $outFile 2>&1
+    jobId="$(cat $outFile | jq -r '.item | .id')"
+else
+    echo "Running new job named $jobName"
+    # CLEAN OUT OLD JOB NAMES AND IDS FROM VARS FILE
+    grep -v 'jobName' $vars > $vars.1
+    grep -v 'jobId' $vars.1 > $vars.2
+    grep -v 'jobStatus' $vars.2 > $vars.3
+    grep -v 'instanceId' $vars.3 > $vars.4
+    grep -v 'runId' $vars.4 > $vars
+    rm -rf $vars.*
+
+cat <<EOF > $inFile
 {
   "name": "$jobName",
-  "description": "$jobDescription",
+  "description": "$jobDesc",
   "exceptionRules": [],
   "scheduleRule": "immediate",
   "target": {
@@ -53,7 +69,7 @@ cat <<EOF > $filename
                 "name": "primary_ip",
                 "operator": "MATCHES",
                 "value": [
-                  "$nodeip"
+                  "$nodeIp"
                 ]
               }
             ]
@@ -248,26 +264,13 @@ cat <<EOF > $filename
 }
 EOF
 
-clear
-cat $filename
+    chef-courier-cli scheduler jobs add-job --body-file $inFile | tee $outFile 2>&1
+    jobId="$(cat $outFile | jq -r '.item | .id')"
+fi
 
-read -p 'Press enter to continue. Crtp-C to cancel' yn
-
-
-echo "REGISTERING JOB NAMED - $jobName" 
-chef-courier-cli scheduler jobs add-job --body-file $filename | tee $filename.out
-jobId="$(cat $filename.out | jq .item | jq .id | tr -d '"' )"
+echo ''
 echo 'jobName="'$jobName'"' >>  $vars    
-echo 'jobId="'$jobId'"' >>  $vars    
-
-echo "jobName and jobId stored in $vars"
-echo $vars
-
-
-
-
-
-
+echo 'jobId="'$jId'"' >>  $vars    
 
 # END OF SCRIPT
 
