@@ -1,0 +1,9 @@
+name: chef360-mcp-service
+services:
+  api:
+    project: .
+    host: containerapp
+    language: js
+    docker:
+      path: mcp-service/Dockerfile
+      context: .
