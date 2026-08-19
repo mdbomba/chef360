@@ -2,6 +2,10 @@
 
 TypeScript MCP service backed by the Chef 360 Platform knowledge set.
 
+This is the standalone public implementation. The repository's active local
+Python service under `src/chef_knowledge_mcp/` exposes the same public knowledge
+plus an optional protected Chef CFT overlay.
+
 ## Structure
 
 ```text

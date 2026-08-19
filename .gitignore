@@ -11,6 +11,7 @@ infra/azure/azure-two-linux-lowcost.parameters.json
 *.key
 *.p12
 *.pfx
+*.token
 *signed*config*
 
 # Generated Chef 360 request/response files
@@ -26,18 +27,31 @@ cohort.json
 job*.json
 courier-runner-key.pem
 
-# Protected local knowledge derived from private/internal repositories
+# Protected local Chef CFT knowledge and host context
 data/
-docs/chef-cft-metadata-index.json
-docs/chef-cft-metadata-index.md
+docs/chef-cft-metadata-index.*
 docs/chef-cft-knowledge-guide.md
+config/chef-cft-corpus.json
+AGENTS.md
+azure-government-tags.md
+docs/mcp-service-context.md
+
+# Customer-specific compliance exports and generated indexes
+docs/progress-chef-compliance-content*
+scripts/content/progress_chef_content_index.py
 
 # Language and build output
 **/__pycache__/
 *.py[cod]
-node_modules/
-dist/
+**/node_modules/
+**/dist/
 coverage/
+.coverage
+.pytest_cache/
+.mypy_cache/
+
+# Obsolete pre-normalization package location
+src/public-mcp/
 
 # Editors and operating systems
 .DS_Store

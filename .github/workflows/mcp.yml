@@ -1,0 +1,55 @@
+name: MCP Services
+
+on:
+  pull_request:
+    paths:
+      - 'knowledge-set/**'
+      - 'mcp-service/**'
+      - 'src/chef_knowledge_mcp/**'
+      - 'scripts/mcp/**'
+      - 'scripts/content/**'
+      - 'config/chef-cft-corpus.example.json'
+      - 'tests/**'
+      - '.github/workflows/mcp.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'knowledge-set/**'
+      - 'mcp-service/**'
+      - 'src/chef_knowledge_mcp/**'
+      - 'scripts/mcp/**'
+      - 'scripts/content/**'
+      - 'config/chef-cft-corpus.example.json'
+      - 'tests/**'
+      - '.github/workflows/mcp.yml'
+
+jobs:
+  python-mcp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m unittest -v tests/test_chef_knowledge_mcp.py
+      - run: python3 tests/mcp_stdio_smoke.py
+
+  typescript-mcp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mcp-service/package-lock.json
+      - run: npm ci
+        working-directory: mcp-service
+      - run: npm test
+        working-directory: mcp-service
+      - run: npm run typecheck
+        working-directory: mcp-service
+      - run: npm run build
+        working-directory: mcp-service
+      - run: docker build -f mcp-service/Dockerfile .

@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "chef-cft-knowledge": {
+      "type": "stdio",
+      "command": "/path/to/chef360/scripts/mcp/run-chef-knowledge-mcp.sh",
+      "args": [],
+      "cwd": "/path/to/chef360",
+      "env": {
+        "CHEF360_KNOWLEDGE_PATH": "/path/to/chef360/knowledge-set/chef360-1.7.3",
+        "CHEF_CFT_INDEX_PATH": "/path/to/chef360/docs/chef-cft-metadata-index.json",
+        "CHEF_CFT_GUIDE_PATH": "/path/to/chef360/docs/chef-cft-knowledge-guide.md",
+        "CHEF_CFT_CORPUS_PATH": "/path/to/chef360/data/chef-cft-knowledge.sqlite3"
+      }
+    }
+  }
+}
