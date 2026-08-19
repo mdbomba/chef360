@@ -3,12 +3,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+source "${PROJECT_ROOT}/scripts/lib/load-parameters.sh"
+load_chef360_parameters "${PROJECT_ROOT}"
 STATE_FILE="${AZURE_TWO_LINUX_STATE_FILE:-${PROJECT_ROOT}/config/azure-two-linux.env}"
-if [[ -f "${STATE_FILE}" ]]; then
-  set -a
-  source "${STATE_FILE}"
-  set +a
-fi
+load_env_defaults "${STATE_FILE}"
 
 RESOURCE_GROUP="${1:-${RESOURCE_GROUP:-rg-chef360-linux}}"
 OBJECT_OWNER_PREFIX="${OBJECT_OWNER_PREFIX:-chef360}"

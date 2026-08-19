@@ -23,10 +23,13 @@ if ([string]::IsNullOrWhiteSpace($SshPrivateKey)) {
 
 $ScriptDir = Split-Path -Parent $PSCommandPath
 $ProjectRoot = Resolve-Path (Join-Path $ScriptDir '../..')
+. (Join-Path $ProjectRoot 'scripts/lib/Import-Chef360Parameters.ps1')
+$parameters = Import-Chef360Parameters -ProjectRoot $ProjectRoot
 $StateFile = if ($env:AZURE_TWO_LINUX_STATE_FILE) { $env:AZURE_TWO_LINUX_STATE_FILE } else { Join-Path $ProjectRoot 'config/azure-two-linux.env' }
 $EnsureSshAccessScript = Join-Path $ScriptDir 'ensure-azure-ssh-access.ps1'
 
 $state = @{}
+foreach ($entry in $parameters.GetEnumerator()) { $state[$entry.Key] = $entry.Value }
 if (Test-Path -LiteralPath $StateFile -PathType Leaf) {
   Get-Content -LiteralPath $StateFile | ForEach-Object {
     if ($_ -match '^\s*#' -or $_ -notmatch '=') { return }
@@ -44,6 +47,9 @@ if ($ExpectedPolicyName -eq 'stig_base' -and $state.ContainsKey('CHEF_POLICY_NAM
 if ($ExpectedPolicyGroup -eq 'dev' -and $state.ContainsKey('CHEF_POLICY_GROUP')) { $ExpectedPolicyGroup = $state['CHEF_POLICY_GROUP'] }
 if ($Node1Target -eq 'node1' -and $state.ContainsKey('NODE1_TARGET')) { $Node1Target = $state['NODE1_TARGET'] }
 if ($Node2Target -eq 'node2' -and $state.ContainsKey('NODE2_TARGET')) { $Node2Target = $state['NODE2_TARGET'] }
+if ($ExpectedCohortName -eq 'all-nodes' -and $state.ContainsKey('CHEF360_COHORT_NAME')) { $ExpectedCohortName = $state['CHEF360_COHORT_NAME'] }
+if ($Chef360Profile -eq 'default' -and $state.ContainsKey('CHEF360_PROFILE')) { $Chef360Profile = $state['CHEF360_PROFILE'] }
+if ([string]::IsNullOrWhiteSpace($ExpectedCohortId) -and $state.ContainsKey('CHEF360_COHORT_ID')) { $ExpectedCohortId = $state['CHEF360_COHORT_ID'] }
 
 if ([string]::IsNullOrWhiteSpace($NamePrefix)) {
   $NamePrefix = "$ObjectOwnerPrefix-sa-linux"

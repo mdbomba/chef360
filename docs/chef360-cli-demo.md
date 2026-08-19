@@ -25,6 +25,9 @@ This project includes CLI-first demo scripts in `scripts/chef360/` that are stru
 
 ## Prerequisites
 
+- Copy `config/chef360.parameters.example.env` to
+  `config/chef360.parameters.env` and set the provider, Chef 360 HTTPS endpoint,
+  profile, cohort, and node defaults.
 - Authenticated Chef 360 CLI profile (default profile by default).
 - Installed CLIs in PATH:
   - `chef-node-management-cli`
@@ -64,4 +67,5 @@ scripts/chef360/job-status.sh <job-id>
 ## Notes
 
 - Scripts intentionally emit parse-friendly output (`KEY=value`) for easy chaining.
-- Use `CHEF360_PROFILE=<profile-name>` to target non-default CLI profiles.
+- Use `CHEF360_PARAMETERS_FILE=<path>` to select another shared parameter file.
+- Explicit environment variables and command-line arguments override shared parameters.

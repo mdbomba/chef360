@@ -3,19 +3,17 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+source "${PROJECT_ROOT}/scripts/lib/load-parameters.sh"
+load_chef360_parameters "${PROJECT_ROOT}"
 STATE_FILE="${AZURE_TWO_LINUX_STATE_FILE:-${PROJECT_ROOT}/config/azure-two-linux.env}"
 SSH_SOURCE_CIDR_OVERRIDE="${SSH_SOURCE_CIDR:-}"
-if [[ -f "${STATE_FILE}" ]]; then
-  set -a
-  source "${STATE_FILE}"
-  set +a
-fi
+load_env_defaults "${STATE_FILE}"
 
 SSH_PRIVATE_KEY="${1:-}"
 CHEF_NODE_USER="${2:-chef}"
 NODE1_TARGET="${3:-${NODE1_TARGET:-node1}}"
 NODE2_TARGET="${4:-${NODE2_TARGET:-node2}}"
-CHEF360_SERVER="${CHEF360_SERVER:-}"
+CHEF360_SERVER="${CHEF360_SERVER:-${CHEF360_ENDPOINT:-}}"
 CHEF360_SIGNED_CONFIG_FILE="${CHEF360_SIGNED_CONFIG_FILE:-}"
 CHEF360_COHORT_ID="${CHEF360_COHORT_ID:-}"
 CHEF360_COHORT_NAME="${CHEF360_COHORT_NAME:-}"

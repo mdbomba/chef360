@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+source "${PROJECT_ROOT}/scripts/lib/load-parameters.sh"
+load_chef360_parameters "${PROJECT_ROOT}"
+
 JOB_ID="${1:-}"
 POLL_SECONDS="${2:-10}"
 PROFILE="${3:-${CHEF360_PROFILE:-default}}"

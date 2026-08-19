@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+source "${PROJECT_ROOT}/scripts/lib/load-parameters.sh"
+load_chef360_parameters "${PROJECT_ROOT}"
+
 COHORT_INPUT="${1:-${CHEF360_COHORT_NAME:-all-nodes}}"
 JOB_NAME="${2:-chef360-demo-sleep}"
 SLEEP_SECONDS="${3:-10}"

@@ -10,8 +10,11 @@ $ErrorActionPreference = 'Stop'
 
 $ScriptDir = Split-Path -Parent $PSCommandPath
 $ProjectRoot = Resolve-Path (Join-Path $ScriptDir '../..')
+. (Join-Path $ProjectRoot 'scripts/lib/Import-Chef360Parameters.ps1')
+$parameters = Import-Chef360Parameters -ProjectRoot $ProjectRoot
 $StateFile = if ($env:AZURE_TWO_LINUX_STATE_FILE) { $env:AZURE_TWO_LINUX_STATE_FILE } else { Join-Path $ProjectRoot 'config/azure-two-linux.env' }
 $state = @{}
+foreach ($entry in $parameters.GetEnumerator()) { $state[$entry.Key] = $entry.Value }
 if (Test-Path -LiteralPath $StateFile -PathType Leaf) {
   Get-Content -LiteralPath $StateFile | ForEach-Object {
     if ($_ -match '^\s*#' -or $_ -notmatch '=') { return }
@@ -67,7 +70,7 @@ if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace(($ruleJson -join ''))) 
 }
 else {
   $rule = ($ruleJson -join "`n") | ConvertFrom-Json
-  $currentCidr = if ($rule.sourceAddressPrefix) { [string]$rule.sourceAddressPrefix } elseif ($rule.sourceAddressPrefixes) { [string]$rule.sourceAddressPrefixes[0] } else { '' }
+  $currentCidr = if ($rule.sourceAddressPrefix) { [string]$rule.sourceAddressPrefix } else { '' }
   if ($currentCidr -ne $SshSourceCidr) {
     Write-Host "Updating NSG rule $nsgName/allow-ssh from '$currentCidr' to '$SshSourceCidr'"
     & az network nsg rule update --resource-group $ResourceGroup --nsg-name $nsgName --name allow-ssh --source-address-prefixes $SshSourceCidr --destination-port-ranges 22 --access Allow --protocol Tcp --direction Inbound --only-show-errors --output none

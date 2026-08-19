@@ -32,6 +32,9 @@ param createPublicIp bool = false
 @description('CIDR allowed to SSH (22) when createPublicIp=true.')
 param sshSourceCidr string = '*'
 
+@description('Additional Chef 360 endpoint CIDRs allowed to SSH (22) when createPublicIp=true.')
+param chef360SshSourceCidrs array = []
+
 @description('Address space for the VNet.')
 param vnetAddressPrefix string = '10.42.0.0/16'
 
@@ -129,7 +132,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   location: location
   tags: tags
   properties: {
-    securityRules: createPublicIp ? [
+    securityRules: createPublicIp ? concat([
       {
         name: 'allow-ssh'
         properties: {
@@ -156,7 +159,21 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
           destinationPortRange: '443'
         }
       }
-    ] : []
+    ], empty(chef360SshSourceCidrs) ? [] : [
+      {
+        name: 'allow-chef360-ssh'
+        properties: {
+          priority: 1020
+          protocol: 'Tcp'
+          access: 'Allow'
+          direction: 'Inbound'
+          sourceAddressPrefixes: chef360SshSourceCidrs
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRange: '22'
+        }
+      }
+    ]) : []
   }
 }
 

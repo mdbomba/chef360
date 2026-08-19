@@ -10,10 +10,13 @@ $ErrorActionPreference = 'Stop'
 
 $ScriptDir = Split-Path -Parent $PSCommandPath
 $ProjectRoot = Resolve-Path (Join-Path $ScriptDir '../..')
+. (Join-Path $ProjectRoot 'scripts/lib/Import-Chef360Parameters.ps1')
+$parameters = Import-Chef360Parameters -ProjectRoot $ProjectRoot
 $StateFile = if ($env:AZURE_TWO_LINUX_STATE_FILE) { $env:AZURE_TWO_LINUX_STATE_FILE } else { Join-Path $ProjectRoot 'config/azure-two-linux.env' }
 $ProjectAzureDir = Join-Path $ProjectRoot '.azure'
 
 $state = @{}
+foreach ($entry in $parameters.GetEnumerator()) { $state[$entry.Key] = $entry.Value }
 if (Test-Path -LiteralPath $StateFile -PathType Leaf) {
   Get-Content -LiteralPath $StateFile | ForEach-Object {
     if ($_ -match '^\s*#' -or $_ -notmatch '=') { return }

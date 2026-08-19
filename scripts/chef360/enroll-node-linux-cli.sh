@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+source "${PROJECT_ROOT}/scripts/lib/load-parameters.sh"
+load_chef360_parameters "${PROJECT_ROOT}"
+
 NODE_TARGET="${1:-}"
 SSH_USER="${2:-chef}"
 SSH_KEY_FILE="${3:-${HOME}/.ssh/id_ed25519}"
@@ -8,7 +13,6 @@ COHORT_ID="${4:-${CHEF360_COHORT_ID:-}}"
 PROFILE="${5:-${CHEF360_PROFILE:-default}}"
 NODE_URL="${6:-${NODE_TARGET}}"
 COHORT_NAME="${CHEF360_COHORT_NAME:-}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENSURE_SSH_ACCESS_SCRIPT="${SCRIPT_DIR}/../azure/ensure-azure-ssh-access.sh"
 SSH_SOURCE_CIDR_OVERRIDE="${SSH_SOURCE_CIDR:-}"
 

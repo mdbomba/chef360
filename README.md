@@ -18,6 +18,25 @@ Protected Chef CFT metadata, private/internal source corpora, credentials,
 customer exports, and host runtime state are deliberately excluded from Git.
 See `SECURITY.md`.
 
+## Shared Parameters
+
+Copy the shared parameter template before running Chef 360 or infrastructure
+workflows:
+
+```bash
+cp config/chef360.parameters.example.env config/chef360.parameters.env
+```
+
+The local file centralizes `PROVIDER`, `CHEF360_ENDPOINT`, CLI profile/cohort,
+managed-node defaults, and provider-specific resource naming. Supported provider
+values are `azure.com`, `azure.us`, `hyperv`, `kvm`, `aws.com`, and `aws.gov`.
+The Chef 360 endpoint must be a complete HTTPS origin such as
+`https://internal.cloud.chef.io:443` or `https://chef360.example.com:3100`.
+
+The file contains no secrets and is gitignored because it identifies the local
+environment. Set `CHEF360_PARAMETERS_FILE` to use another path. Explicit
+environment variables and command-line arguments override file values.
+
 ## Azure Two-Node Workflow
 
 Copy and populate the example parameters before deployment:

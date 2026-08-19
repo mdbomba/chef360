@@ -11,3 +11,15 @@ test("searches the Chef 360 knowledge set", async () => {
   assert.ok(results.length > 0);
   assert.ok(results[0].path.endsWith(".md"));
 });
+
+test("exposes the mandatory Azure node access prerequisite", async () => {
+  const knowledgePath = path.resolve("../knowledge-set/chef360-1.7.3");
+  const results = await searchKnowledge(
+    knowledgePath,
+    "mandatory first step for every Azure-node request",
+    3,
+  );
+
+  assert.equal(results[0]?.path, "operations/azure-node-access.md");
+  assert.match(results[0]?.excerpt ?? "", /api\.ipify\.org/);
+});

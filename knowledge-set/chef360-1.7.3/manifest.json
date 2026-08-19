@@ -6,6 +6,12 @@
   "created": "2026-08-18",
   "documents": [
     {
+      "id": "operations-azure-node-access",
+      "path": "operations/azure-node-access.md",
+      "title": "Azure Node Access Prerequisite",
+      "topics": ["azure", "nodes", "nsg", "public-ip", "ssh", "operations"]
+    },
+    {
       "id": "architecture-overview",
       "path": "architecture/overview.md",
       "title": "Platform Service Overview",

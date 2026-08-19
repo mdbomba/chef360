@@ -12,6 +12,7 @@
     "spotMaxPrice": { "value": -1 },
     "createPublicIp": { "value": true },
     "sshSourceCidr": { "value": "203.0.113.10/32" },
+    "chef360SshSourceCidrs": { "value": [] },
     "privateIpHostOffset": { "value": 4 },
     "xCustomer": { "value": "Example Customer" },
     "xProject": { "value": "Chef 360 Demo" },

@@ -13,10 +13,13 @@ $ErrorActionPreference = 'Stop'
 
 $ScriptDir = Split-Path -Parent $PSCommandPath
 $ProjectRoot = Resolve-Path (Join-Path $ScriptDir '../..')
+. (Join-Path $ProjectRoot 'scripts/lib/Import-Chef360Parameters.ps1')
+$parameters = Import-Chef360Parameters -ProjectRoot $ProjectRoot
 $ProjectAzureDir = Join-Path $ProjectRoot '.azure'
 $StateFile = if ($env:AZURE_TWO_LINUX_STATE_FILE) { $env:AZURE_TWO_LINUX_STATE_FILE } else { Join-Path $ProjectRoot 'config/azure-two-linux.env' }
 
 $state = @{}
+foreach ($entry in $parameters.GetEnumerator()) { $state[$entry.Key] = $entry.Value }
 if (Test-Path -LiteralPath $StateFile -PathType Leaf) {
   Get-Content -LiteralPath $StateFile | ForEach-Object {
     if ($_ -match '^\s*#' -or $_ -notmatch '=') { return }
@@ -29,6 +32,7 @@ if (Test-Path -LiteralPath $StateFile -PathType Leaf) {
 
 if ($ResourceGroup -eq 'rg-chef360-linux' -and $state.ContainsKey('RESOURCE_GROUP')) { $ResourceGroup = $state['RESOURCE_GROUP'] }
 if ([string]::IsNullOrWhiteSpace($NamePrefix) -and $state.ContainsKey('NAME_PREFIX')) { $NamePrefix = $state['NAME_PREFIX'] }
+if ($Chef360Profile -eq 'default' -and $state.ContainsKey('CHEF360_PROFILE')) { $Chef360Profile = $state['CHEF360_PROFILE'] }
 
 if ([string]::IsNullOrWhiteSpace($NamePrefix)) {
   $NamePrefix = "$ObjectOwnerPrefix-sa-linux"

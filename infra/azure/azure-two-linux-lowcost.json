@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.46.1.21595",
-      "templateHash": "650799824417927107"
+      "templateHash": "18338746643062137848"
     }
   },
   "parameters": {
@@ -78,6 +78,13 @@
       "defaultValue": "*",
       "metadata": {
         "description": "CIDR allowed to SSH (22) when createPublicIp=true."
+      }
+    },
+    "chef360SshSourceCidrs": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Additional Chef 360 endpoint CIDRs allowed to SSH (22) when createPublicIp=true."
       }
     },
     "vnetAddressPrefix": {
@@ -224,7 +231,7 @@
       "location": "[parameters('location')]",
       "tags": "[variables('tags')]",
       "properties": {
-        "securityRules": "[if(parameters('createPublicIp'), createArray(createObject('name', 'allow-ssh', 'properties', createObject('priority', 1000, 'protocol', 'Tcp', 'access', 'Allow', 'direction', 'Inbound', 'sourceAddressPrefix', parameters('sshSourceCidr'), 'sourcePortRange', '*', 'destinationAddressPrefix', '*', 'destinationPortRange', '22')), createObject('name', 'allow-https', 'properties', createObject('priority', 1010, 'protocol', 'Tcp', 'access', 'Allow', 'direction', 'Inbound', 'sourceAddressPrefix', '*', 'sourcePortRange', '*', 'destinationAddressPrefix', '*', 'destinationPortRange', '443'))), createArray())]"
+        "securityRules": "[if(parameters('createPublicIp'), concat(createArray(createObject('name', 'allow-ssh', 'properties', createObject('priority', 1000, 'protocol', 'Tcp', 'access', 'Allow', 'direction', 'Inbound', 'sourceAddressPrefix', parameters('sshSourceCidr'), 'sourcePortRange', '*', 'destinationAddressPrefix', '*', 'destinationPortRange', '22')), createObject('name', 'allow-https', 'properties', createObject('priority', 1010, 'protocol', 'Tcp', 'access', 'Allow', 'direction', 'Inbound', 'sourceAddressPrefix', '*', 'sourcePortRange', '*', 'destinationAddressPrefix', '*', 'destinationPortRange', '443'))), if(empty(parameters('chef360SshSourceCidrs')), createArray(), createArray(createObject('name', 'allow-chef360-ssh', 'properties', createObject('priority', 1020, 'protocol', 'Tcp', 'access', 'Allow', 'direction', 'Inbound', 'sourceAddressPrefixes', parameters('chef360SshSourceCidrs'), 'sourcePortRange', '*', 'destinationAddressPrefix', '*', 'destinationPortRange', '22'))))), createArray())]"
       }
     },
     {

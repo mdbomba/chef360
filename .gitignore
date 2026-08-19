@@ -5,6 +5,7 @@
 .env.*
 !.env.example
 chef360.vars
+config/chef360.parameters.env
 config/azure-two-linux.env
 infra/azure/azure-two-linux-lowcost.parameters.json
 *.pem
