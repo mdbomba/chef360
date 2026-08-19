@@ -1,0 +1,12 @@
+# Copy to chef360.vars for legacy scripts and replace placeholders.
+# chef360.vars is gitignored because scripts append runtime IDs and status.
+workstation="chef-workstation"
+chef360="chef360.example.com"
+orgAdmin="org-admin-profile"
+tenantAdmin="tenant-admin-profile"
+defaultAdmin="default"
+capi="https://chef360.example.com"
+credFile="$HOME/.chef-platform/credentials"
+skillAssemblyName="example-skill-assembly"
+skillOverrideName="example-skill-settings"
+cohortName="example-cohort"

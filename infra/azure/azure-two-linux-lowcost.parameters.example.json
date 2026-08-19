@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": { "value": "eastus" },
+    "namePrefix": { "value": "chef360-linux" },
+    "vmCount": { "value": 2 },
+    "adminUsername": { "value": "chef" },
+    "sshPublicKey": { "value": "ssh-ed25519 REPLACE_WITH_YOUR_PUBLIC_KEY" },
+    "vmSize": { "value": "Standard_D2s_v5" },
+    "useSpot": { "value": true },
+    "spotMaxPrice": { "value": -1 },
+    "createPublicIp": { "value": true },
+    "sshSourceCidr": { "value": "203.0.113.10/32" },
+    "privateIpHostOffset": { "value": 4 },
+    "xCustomer": { "value": "Example Customer" },
+    "xProject": { "value": "Chef 360 Demo" },
+    "xApplication": { "value": "Chef 360 Nodes" },
+    "xDept": { "value": "Engineering" },
+    "xName": { "value": "Example Owner" },
+    "xContact": { "value": "owner@example.com" },
+    "xTTL": { "value": "48" },
+    "application": { "value": "chef-360-nodes" },
+    "team": { "value": "engineering" },
+    "owner": { "value": "owner@example.com" },
+    "ephemeral": { "value": "yes" }
+  }
+}

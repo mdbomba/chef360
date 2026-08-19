@@ -1,0 +1,45 @@
+# Local credentials and runtime state
+.azure/
+.azure-local/
+.env
+.env.*
+!.env.example
+chef360.vars
+config/azure-two-linux.env
+infra/azure/azure-two-linux-lowcost.parameters.json
+*.pem
+*.key
+*.p12
+*.pfx
+*signed*config*
+
+# Generated Chef 360 request/response files
+defined-skills.in
+skills-assembly.in
+skills-override.in
+*.out
+enroll-*.json
+*-skill.json
+skill-assembly.json
+node-override-setting.json
+cohort.json
+job*.json
+courier-runner-key.pem
+
+# Protected local knowledge derived from private/internal repositories
+data/
+docs/chef-cft-metadata-index.json
+docs/chef-cft-metadata-index.md
+docs/chef-cft-knowledge-guide.md
+
+# Language and build output
+**/__pycache__/
+*.py[cod]
+node_modules/
+dist/
+coverage/
+
+# Editors and operating systems
+.DS_Store
+.vscode/
+.idea/

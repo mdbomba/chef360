@@ -1,0 +1,407 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.46.1.21595",
+      "templateHash": "650799824417927107"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for all resources."
+      }
+    },
+    "namePrefix": {
+      "type": "string",
+      "defaultValue": "sa-linux",
+      "metadata": {
+        "description": "Prefix used for resource names."
+      }
+    },
+    "vmCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 2,
+      "maxValue": 2,
+      "metadata": {
+        "description": "Number of Linux VMs to create."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "chef",
+      "metadata": {
+        "description": "Admin username for Linux VMs."
+      }
+    },
+    "sshPublicKey": {
+      "type": "string",
+      "metadata": {
+        "description": "SSH public key for Linux VMs."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_B1s",
+      "metadata": {
+        "description": "VM size. Standard_B1s is generally one of the lowest cost general-purpose sizes."
+      }
+    },
+    "useSpot": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Use Spot VMs for lowest cost. Suitable for non-production/interruptible workloads."
+      }
+    },
+    "spotMaxPrice": {
+      "type": "int",
+      "defaultValue": -1,
+      "metadata": {
+        "description": "Maximum price for Spot VMs in USD/hour. -1 means pay up to on-demand price."
+      }
+    },
+    "createPublicIp": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable public IPs on VMs. Keeping this false lowers cost and reduces exposure."
+      }
+    },
+    "sshSourceCidr": {
+      "type": "string",
+      "defaultValue": "*",
+      "metadata": {
+        "description": "CIDR allowed to SSH (22) when createPublicIp=true."
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.42.0.0/16",
+      "metadata": {
+        "description": "Address space for the VNet."
+      }
+    },
+    "subnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.42.1.0/24",
+      "metadata": {
+        "description": "Address space for the VM subnet."
+      }
+    },
+    "privateIpHostOffset": {
+      "type": "int",
+      "defaultValue": 4,
+      "minValue": 4,
+      "metadata": {
+        "description": "First usable subnet host offset assigned to the VMs. Node addresses increment from this value."
+      }
+    },
+    "xCustomer": {
+      "type": "string",
+      "metadata": {
+        "description": "Progress tag: X-Customer"
+      }
+    },
+    "xProject": {
+      "type": "string",
+      "metadata": {
+        "description": "Progress tag: X-Project"
+      }
+    },
+    "xApplication": {
+      "type": "string",
+      "metadata": {
+        "description": "Progress tag: X-Application"
+      }
+    },
+    "xDept": {
+      "type": "string",
+      "metadata": {
+        "description": "Progress tag: X-Dept"
+      }
+    },
+    "xName": {
+      "type": "string",
+      "metadata": {
+        "description": "Progress tag: X-Name"
+      }
+    },
+    "xContact": {
+      "type": "string",
+      "metadata": {
+        "description": "Progress tag: X-Contact"
+      }
+    },
+    "xTTL": {
+      "type": "string",
+      "metadata": {
+        "description": "Progress tag: X-TTL (hours)"
+      }
+    },
+    "application": {
+      "type": "string",
+      "metadata": {
+        "description": "Progress tag: application"
+      }
+    },
+    "team": {
+      "type": "string",
+      "metadata": {
+        "description": "Progress tag: team"
+      }
+    },
+    "owner": {
+      "type": "string",
+      "metadata": {
+        "description": "Progress tag: owner"
+      }
+    },
+    "expiration": {
+      "type": "string",
+      "defaultValue": "[dateTimeAdd(utcNow(), 'P2D', 'yyyy-MM-dd')]",
+      "metadata": {
+        "description": "Progress tag: expiration (YYYY-MM-DD)"
+      }
+    },
+    "ephemeral": {
+      "type": "string",
+      "defaultValue": "yes",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Progress tag: ephemeral (yes/no)"
+      }
+    }
+  },
+  "variables": {
+    "copy": [
+      {
+        "name": "vmNames",
+        "count": "[length(variables('vmIndices'))]",
+        "input": "[format('{0}-{1}', parameters('namePrefix'), add(variables('vmIndices')[copyIndex('vmNames')], 1))]"
+      },
+      {
+        "name": "privateIpAddresses",
+        "count": "[length(variables('vmIndices'))]",
+        "input": "[cidrHost(parameters('subnetAddressPrefix'), add(parameters('privateIpHostOffset'), variables('vmIndices')[copyIndex('privateIpAddresses')]))]"
+      },
+      {
+        "name": "expectedPublicIpNames",
+        "count": "[length(variables('vmNames'))]",
+        "input": "[format('{0}-pip', variables('vmNames')[copyIndex('expectedPublicIpNames')])]"
+      }
+    ],
+    "tags": {
+      "X-Customer": "[parameters('xCustomer')]",
+      "X-Project": "[parameters('xProject')]",
+      "X-Application": "[parameters('xApplication')]",
+      "X-Dept": "[parameters('xDept')]",
+      "X-Name": "[parameters('xName')]",
+      "X-Contact": "[parameters('xContact')]",
+      "X-TTL": "[parameters('xTTL')]",
+      "application": "[parameters('application')]",
+      "team": "[parameters('team')]",
+      "owner": "[parameters('owner')]",
+      "expiration": "[parameters('expiration')]",
+      "ephemeral": "[parameters('ephemeral')]"
+    },
+    "vmIndices": "[range(0, parameters('vmCount'))]",
+    "linuxCloudInit": "[base64(format('#cloud-config\npackage_update: true\npackages:\n  - curl\n  - jq\n  - openssh-client\n  - openssh-server\nssh_pwauth: false\nwrite_files:\n  - path: /etc/sudoers.d/chef\n    permissions: ''0440''\n    owner: root:root\n    content: |\n      {0} ALL=(ALL) NOPASSWD:ALL\nruncmd:\n  - [ sh, -c, \"sed -i ''/[[:space:]]node1$/d; /[[:space:]]node2$/d'' /etc/hosts && printf ''%s\\\\tnode1\\\\n%s\\\\tnode2\\\\n'' ''{1}'' ''{2}'' >> /etc/hosts\" ]\n  - [ chmod, ''0440'', /etc/sudoers.d/chef ]\n  - [ visudo, -cf, /etc/sudoers.d/chef ]\n  - [ systemctl, enable, --now, ssh ]\n  - [ touch, /var/lib/chef360-template-ready ]\n', parameters('adminUsername'), variables('privateIpAddresses')[0], variables('privateIpAddresses')[1]))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-11-01",
+      "name": "[format('{0}-nsg', parameters('namePrefix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "securityRules": "[if(parameters('createPublicIp'), createArray(createObject('name', 'allow-ssh', 'properties', createObject('priority', 1000, 'protocol', 'Tcp', 'access', 'Allow', 'direction', 'Inbound', 'sourceAddressPrefix', parameters('sshSourceCidr'), 'sourcePortRange', '*', 'destinationAddressPrefix', '*', 'destinationPortRange', '22')), createObject('name', 'allow-https', 'properties', createObject('priority', 1010, 'protocol', 'Tcp', 'access', 'Allow', 'direction', 'Inbound', 'sourceAddressPrefix', '*', 'sourcePortRange', '*', 'destinationAddressPrefix', '*', 'destinationPortRange', '443'))), createArray())]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-11-01",
+      "name": "[format('{0}-vnet', parameters('namePrefix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[format('{0}-subnet', parameters('namePrefix'))]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetAddressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-nsg', parameters('namePrefix')))]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-nsg', parameters('namePrefix')))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "publicIps",
+        "count": "[length(variables('vmNames'))]"
+      },
+      "condition": "[parameters('createPublicIp')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-11-01",
+      "name": "[format('{0}-pip', variables('vmNames')[copyIndex()])]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "copy": {
+        "name": "nics",
+        "count": "[length(variables('vmNames'))]"
+      },
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-11-01",
+      "name": "[format('{0}-nic', variables('vmNames')[copyIndex()])]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('privateIpAddresses')[copyIndex()]]",
+              "subnet": {
+                "id": "[format('{0}/subnets/{1}-subnet', resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', parameters('namePrefix'))), parameters('namePrefix'))]"
+              },
+              "publicIPAddress": "[if(parameters('createPublicIp'), createObject('id', resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', variables('vmNames')[copyIndex()]))), null())]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', variables('vmNames')[copyIndex()]))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', parameters('namePrefix')))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "linuxVms",
+        "count": "[length(variables('vmNames'))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2024-03-01",
+      "name": "[variables('vmNames')[copyIndex()]]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "additionalCapabilities": {
+          "hibernationEnabled": false
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "ubuntu-22_04-lts",
+            "sku": "server",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            },
+            "deleteOption": "Delete"
+          }
+        },
+        "osProfile": {
+          "computerName": "[variables('vmNames')[copyIndex()]]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "customData": "[variables('linuxCloudInit')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
+                  "keyData": "[parameters('sshPublicKey')]"
+                }
+              ]
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', variables('vmNames')[copyIndex()]))]",
+              "properties": {
+                "deleteOption": "Delete"
+              }
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": false
+          }
+        },
+        "priority": "[if(parameters('useSpot'), 'Spot', 'Regular')]",
+        "evictionPolicy": "[if(parameters('useSpot'), 'Deallocate', null())]",
+        "billingProfile": "[if(parameters('useSpot'), createObject('maxPrice', parameters('spotMaxPrice')), null())]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', variables('vmNames')[copyIndex()]))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "vmNames": {
+      "type": "array",
+      "copy": {
+        "count": "[length(variables('vmIndices'))]",
+        "input": "[variables('vmNames')[variables('vmIndices')[copyIndex()]]]"
+      }
+    },
+    "privateIps": {
+      "type": "array",
+      "copy": {
+        "count": "[length(variables('vmIndices'))]",
+        "input": "[reference(resourceId('Microsoft.Network/networkInterfaces', format('{0}-nic', variables('vmNames')[variables('vmIndices')[copyIndex()]])), '2023-11-01').ipConfigurations[0].properties.privateIPAddress]"
+      }
+    },
+    "publicIpResourceNames": {
+      "type": "array",
+      "value": "[if(parameters('createPublicIp'), variables('expectedPublicIpNames'), createArray())]"
+    },
+    "nodeHostEntries": {
+      "type": "array",
+      "copy": {
+        "count": "[length(variables('vmIndices'))]",
+        "input": "[format('{0} {1}', variables('privateIpAddresses')[variables('vmIndices')[copyIndex()]], variables('vmNames')[variables('vmIndices')[copyIndex()]])]"
+      }
+    }
+  }
+}

@@ -3,3 +3,15 @@
 **/.env
 **/*.log
 .git
+.azure
+.azure-local
+data
+docs/chef-cft-*
+config/azure-two-linux.env
+infra/azure/azure-two-linux-lowcost.parameters.json
+chef360.vars
+*.pem
+*.key
+**/__pycache__
+node_modules
+mcp-service/node_modules

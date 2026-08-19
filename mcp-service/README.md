@@ -23,6 +23,8 @@ npm run build
 npm start
 ```
 
+Node.js 20 or newer is required.
+
 For the Streamable HTTP transport used by hosted clients:
 
 ```bash
@@ -30,6 +32,9 @@ npm run dev:http
 ```
 
 The MCP endpoint is `POST /mcp`; Azure health probes can use `GET /health`.
+The HTTP transport has no built-in authentication and must not be exposed
+directly to an untrusted network. Place it behind authenticated ingress or use
+the local stdio transport.
 
 The default knowledge path is `../knowledge-set/chef360-1.7.3`. Override it with
 the `KNOWLEDGE_PATH` environment variable.

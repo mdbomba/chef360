@@ -13,7 +13,7 @@
 #
 ## EDITABLE PARAMETERS ##
 workstation= hostname -s
-chef360='courier.kemptech.biz'
+chef360='chef360.example.com'
 orgAdmin='chef' 
 tenantAdmin='lab'
 defaultAdmin='chef'

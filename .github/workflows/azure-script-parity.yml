@@ -1,0 +1,30 @@
+name: Azure Script Parity
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/azure/**'
+      - 'scripts/ci/check-azure-script-parity.py'
+      - '.github/workflows/azure-script-parity.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/azure/**'
+      - 'scripts/ci/check-azure-script-parity.py'
+      - '.github/workflows/azure-script-parity.yml'
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Check Azure script parity
+        run: python3 scripts/ci/check-azure-script-parity.py
