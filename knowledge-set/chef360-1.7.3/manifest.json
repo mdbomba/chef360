@@ -118,6 +118,24 @@
       "path": "lab/topology.md",
       "title": "Local Chef Lab Topology",
       "topics": ["kvm", "libvirt", "lab", "workstation", "chef360", "automate", "nodes"]
+    },
+    {
+      "id": "chef-automate-overview",
+      "path": "automate/overview.md",
+      "title": "Chef Automate Overview and Operations",
+      "topics": ["automate", "compliance", "reporting", "api", "iam", "data-collection"]
+    },
+    {
+      "id": "chef-inspec-overview",
+      "path": "inspec/overview.md",
+      "title": "Chef InSpec 5.24 Overview and Operations",
+      "topics": ["inspec", "compliance-as-code", "profiles", "controls", "scanning", "reporters"]
+    },
+    {
+      "id": "chef-workstation-overview",
+      "path": "workstation/overview.md",
+      "title": "Chef Workstation 25 Overview and Operations",
+      "topics": ["workstation", "knife", "policyfile", "test-kitchen", "cookstyle", "cli"]
     }
   ],
   "mcp_capabilities": [

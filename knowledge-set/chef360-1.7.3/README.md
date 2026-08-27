@@ -18,6 +18,9 @@ chef360-1.7.3/
   dsm/                    # Declarative State Management
   platform-services/      # Platform auth, accounts, system services
   cli/                    # CLI tools reference
+  automate/               # Chef Automate visibility and reporting
+  inspec/                 # Chef InSpec compliance-as-code
+  workstation/            # Chef Workstation tools and workflows
   glossary/               # Terms and definitions
 ```
 
@@ -28,4 +31,7 @@ Load any markdown file as context for an MCP service to enable Chef 360 Platform
 - Courier job scheduling and execution
 - DSM cookbook/policy management
 - Platform administration (users, roles, policies)
+- Chef Automate architecture, APIs, data flow, and operations
+- Chef InSpec profiles, controls, execution, and result handling
+- Chef Workstation tools, configuration, and development workflows
 - API interactions
