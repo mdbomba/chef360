@@ -337,8 +337,13 @@ pre code {
   color: #9bd8f2;
 }
 
+.codehilite {
+  break-inside: avoid;
+}
+
 .embedded-script {
   break-before: page;
+  break-inside: auto;
 }
 
 blockquote {

@@ -9,6 +9,7 @@ These sources govern `chef360-1.7.3-quick-start.md`, `chef360-1.7.3-exportable-q
 - Chef 360 Platform 1.7 Documentation (versioned 1.7.3 source set): https://docs.chef.io/360/1.7/
 - Chef 360 Platform 1.7 Implicit Kubernetes Requirements: https://docs.chef.io/360/1.7/install/server/implicit/requirements/
 - Chef 360 Platform 1.7 Implicit Kubernetes Installation: https://docs.chef.io/360/1.7/install/server/implicit/install/
+- Chef 360 Platform 1.7 Get Started Server Installation and Velero Plugins: https://docs.chef.io/360/1.7/get_started/install_server/#install-velero-plugins
 - Chef 360 Platform 1.7 Cluster Management and Topologies: https://docs.chef.io/360/1.7/admin_console/cluster_management/
 - Chef 360 Platform 1.7 Admin Console: https://docs.chef.io/360/1.7/admin_console/
 - Chef 360 Platform 1.7 Admin Console Dashboard: https://docs.chef.io/360/1.7/admin_console/dashboard/

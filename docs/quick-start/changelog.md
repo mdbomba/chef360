@@ -19,6 +19,7 @@ This file records material changes to the Chef 360 quick-start project. It does 
 - Updated the helper to pass `--airgap-bundle chef-360.airgap` when the air-gapped package is selected and aligned its storage comment with the ext4-on-KVM preference.
 - Updated the helper so online mode installs on the Chef 360 host while air-gap mode validates staged artifacts and stops for required transfer and image-preload steps.
 - Passed the authorization header to `curl` through standard input so the authorization code is not exposed in process arguments.
+- Expanded the exportable guide and customer PDF with the complete air-gapped Velero plugin workflow: pull, save, transfer, preload, verify, and install.
 
 > Entries before this repository migration retain the filenames used by the original standalone documentation project.
 

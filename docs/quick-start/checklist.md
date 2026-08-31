@@ -132,7 +132,8 @@ Custom certificates are recommended but are not required for Chef 360 to operate
 - [ ] Download the version-pinned Chef 360 Platform `1.7.3` package.
 - [ ] Add `?airgap=true` to the distribution URL when the air-gapped package is required.
 - [ ] Extract the package and confirm that `license.yaml` exists and is non-empty.
-- [ ] For an air-gapped installation, download, transfer, and preload the documented Velero plugin images.
+- [ ] For an air-gapped installation, export `docker.io/progressofficial/chef360:1.0.3` and `docker.io/velero/velero-plugin-for-aws:v1.12.1` as `.tar` archives on the Internet-connected jump host.
+- [ ] Transfer and preload both Velero plugin archives in `/var/lib/embedded-cluster/k0s/images/` on the air-gapped Chef 360 host before installation.
 - [ ] Run `sudo ./chef-360 install --license license.yaml` for an online installation.
 - [ ] Add `--airgap-bundle chef-360.airgap` for an air-gapped installation.
 - [ ] Create and securely store the Admin Console password.
