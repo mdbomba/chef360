@@ -14,6 +14,10 @@ infra/azure/azure-two-linux-lowcost.parameters.json
 *.pfx
 *.token
 *signed*config*
+/chef-360
+/chef-360.airgap
+/chef-360-*.tgz
+/license.yaml
 
 # Generated Chef 360 request/response files
 defined-skills.in

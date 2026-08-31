@@ -8,6 +8,7 @@ public knowledge, and MCP services.
 - `infra/azure/`: two-node Azure infrastructure templates.
 - `scripts/azure/`: paired Bash and PowerShell deployment workflows.
 - `scripts/chef360/`: reusable Chef 360 enrollment and Courier workflows.
+- `docs/quick-start/`: Chef 360 Platform 1.7.3 single-node installation guide and supporting project records.
 - `knowledge-set/chef360-1.7.3/`: checked-in public Chef 360 documentation set.
 - `src/chef_knowledge_mcp/`: active Python MCP with public knowledge and an optional protected local overlay.
 - `mcp-service/`: standalone TypeScript MCP for the public knowledge set and allowlisted lab inspection.
@@ -17,6 +18,17 @@ public knowledge, and MCP services.
 Protected Chef CFT metadata, private/internal source corpora, credentials,
 customer exports, and host runtime state are deliberately excluded from Git.
 See `SECURITY.md`.
+
+## Chef 360 Platform Quick Start
+
+The operator-focused [Chef 360 Platform 1.7.3 quick start](docs/quick-start/README.md)
+covers planning, host preparation, online and air-gapped installation, initial
+tenant configuration, and successful tenant administrator sign-in. Validate
+quick-start changes from the repository root:
+
+```bash
+bash scripts/ci/check-quick-start.sh
+```
 
 ## Shared Parameters
 
