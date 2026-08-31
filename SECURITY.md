@@ -3,8 +3,8 @@
 ## Credentials
 
 Do not commit Chef credentials, GitHub tokens, Azure CLI state, SSH private keys,
-signed enrollment configurations, generated Courier credentials, or runtime
-response files.
+signed enrollment configurations, generated Courier credentials, Chef 360
+authorization codes, downloaded `license.yaml` files, or runtime response files.
 
 Use checked-in `*.example` files as templates and keep populated copies local.
 The root `.gitignore` excludes common credential and runtime-state paths.
