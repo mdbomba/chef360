@@ -8,6 +8,8 @@ This file records material changes to the Chef 360 quick-start project. It does 
 
 - Migrated the public-safe quick-start documentation and helper into the Chef 360 project of record under `docs/quick-start/` and `scripts/`.
 - Added repository CI coverage for quick-start consistency checks.
+- Added a self-contained exportable quick-start guide with the maintained download and installation script embedded and Mailpit account activation through Apps Console sign-in.
+- Added a styled customer-facing PDF, print stylesheet, and reproducible PDF build script.
 
 ### Changed
 
@@ -15,6 +17,8 @@ This file records material changes to the Chef 360 quick-start project. It does 
 - Reworked `CHECKLIST.md` as a Chef 360 Platform 1.7.3 quick-start checklist aligned with the current scope, terminology, accepted field guidance, installation methods, and success criteria.
 - Added task-specific context loading, a local-first research order, scoped source groups, canonical-content roles, and `verify-project.sh` consistency checks.
 - Updated the helper to pass `--airgap-bundle chef-360.airgap` when the air-gapped package is selected and aligned its storage comment with the ext4-on-KVM preference.
+- Updated the helper so online mode installs on the Chef 360 host while air-gap mode validates staged artifacts and stops for required transfer and image-preload steps.
+- Passed the authorization header to `curl` through standard input so the authorization code is not exposed in process arguments.
 
 > Entries before this repository migration retain the filenames used by the original standalone documentation project.
 

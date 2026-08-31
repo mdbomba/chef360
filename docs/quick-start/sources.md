@@ -4,7 +4,7 @@ Use version-specific sources and the narrowest applicable section below. The che
 
 ## Quick-Start Authoritative Sources
 
-These sources govern `chef360-1.7.3-quick-start.md`, `checklist.md`, and `../../scripts/chef360/download-install-server.sh`:
+These sources govern `chef360-1.7.3-quick-start.md`, `chef360-1.7.3-exportable-quick-start.md`, `checklist.md`, and `../../scripts/chef360/download-install-server.sh`:
 
 - Chef 360 Platform 1.7 Documentation (versioned 1.7.3 source set): https://docs.chef.io/360/1.7/
 - Chef 360 Platform 1.7 Implicit Kubernetes Requirements: https://docs.chef.io/360/1.7/install/server/implicit/requirements/

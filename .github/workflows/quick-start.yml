@@ -6,6 +6,8 @@ on:
       - 'docs/quick-start/**'
       - 'scripts/chef360/download-install-server.sh'
       - 'scripts/ci/check-quick-start.sh'
+      - 'scripts/content/build-quick-start-pdf.py'
+      - 'scripts/content/requirements-quick-start-pdf.txt'
       - '.github/workflows/quick-start.yml'
   push:
     branches:
@@ -14,6 +16,8 @@ on:
       - 'docs/quick-start/**'
       - 'scripts/chef360/download-install-server.sh'
       - 'scripts/ci/check-quick-start.sh'
+      - 'scripts/content/build-quick-start-pdf.py'
+      - 'scripts/content/requirements-quick-start-pdf.txt'
       - '.github/workflows/quick-start.yml'
 
 jobs:
@@ -25,3 +29,6 @@ jobs:
 
       - name: Verify quick-start content
         run: bash scripts/ci/check-quick-start.sh
+
+      - name: Check PDF builder syntax
+        run: python3 -m py_compile scripts/content/build-quick-start-pdf.py

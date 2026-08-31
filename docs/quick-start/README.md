@@ -45,6 +45,9 @@ These subjects are planned for a separate configuration and operations companion
 | File | Purpose |
 |---|---|
 | `chef360-1.7.3-quick-start.md` | Canonical installation and initial-configuration guide |
+| `chef360-1.7.3-exportable-quick-start.md` | Self-contained distributable guide with the maintained download and installation script embedded |
+| `Chef_360_Platform_1.7.3_Quick_Start.pdf` | Customer-facing PDF generated from the self-contained guide |
+| `customer-pdf.css` | Print stylesheet for the customer-facing PDF |
 | `checklist.md` | Condensed derivative planning, installation, and validation checklist |
 | `sources.md` | Authoritative and supporting references |
 | `guidance-differences.md` | Accepted additions, interpretations, and deviations from published guidance |
@@ -81,6 +84,14 @@ The quick-start documentation tasks are complete except for a clean-room walkthr
 The companion configuration and operations guide has not yet been created.
 
 ## Validation
+
+To rebuild the customer-facing PDF from the repository root:
+
+```bash
+python3 -m venv /tmp/chef360-pdf-venv
+/tmp/chef360-pdf-venv/bin/pip install -r scripts/content/requirements-quick-start-pdf.txt
+/tmp/chef360-pdf-venv/bin/python scripts/content/build-quick-start-pdf.py
+```
 
 After changing the shell helper, run:
 
