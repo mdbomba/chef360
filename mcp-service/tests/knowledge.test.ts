@@ -23,3 +23,17 @@ test("exposes the mandatory Azure node access prerequisite", async () => {
   assert.equal(results[0]?.path, "operations/azure-node-access.md");
   assert.match(results[0]?.excerpt ?? "", /api\.ipify\.org/);
 });
+
+test("searches the related Chef product knowledge", async () => {
+  const knowledgePath = path.resolve("../knowledge-set/chef360-1.7.3");
+  const queries = [
+    ["Automate Gateway", "automate/overview.md"],
+    ["compliance-as-code", "inspec/overview.md"],
+    ["Policyfile workflow", "workstation/overview.md"],
+  ] as const;
+
+  for (const [query, expectedPath] of queries) {
+    const results = await searchKnowledge(knowledgePath, query, 5);
+    assert.ok(results.some((result) => result.path === expectedPath));
+  }
+});

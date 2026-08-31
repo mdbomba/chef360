@@ -36,7 +36,14 @@ class ChefKnowledgeMcpTests(unittest.TestCase):
 
     def test_public_manifest_has_expected_documents(self) -> None:
         self.assertEqual("1.7.3", self.public_knowledge.manifest["version"])
-        self.assertEqual(19, len(self.public_knowledge.documents))
+        self.assertEqual(22, len(self.public_knowledge.documents))
+        self.assertTrue(
+            {
+                "chef-automate-overview",
+                "chef-inspec-overview",
+                "chef-workstation-overview",
+            }.issubset(document["id"] for document in self.public_knowledge.documents)
+        )
 
     def test_public_search_finds_azure_node_access_prerequisite(self) -> None:
         result = self.public_knowledge.search(
