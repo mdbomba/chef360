@@ -36,6 +36,8 @@ Chef CFT assets, including BYOK examples, may target older releases or contain u
 ## Canonical Content
 
 - `chef360-1.7.3-quick-start.md` is the canonical quick-start procedure.
+- `chef360-1.7.3-exportable-quick-start.md` is a self-contained derivative for distribution and embeds the maintained helper script.
+- `Chef_360_Platform_1.7.3_Quick_Start.pdf` is the customer-facing export generated from the self-contained derivative.
 - `checklist.md` is a condensed derivative of the canonical guide.
 - `../../scripts/chef360/download-install-server.sh` is a supplemental implementation helper.
 - `guidance-differences.md` is the canonical register of intentional additions, interpretations, and deviations.
@@ -59,4 +61,6 @@ Run from the repository root after material quick-start documentation or helper 
 bash scripts/ci/check-quick-start.sh
 ```
 
-Verify commands, ports, paths, prerequisites, and product behavior against `sources.md`. Confirm that Markdown structure and internal references remain valid.
+The verifier confirms that the script embedded in the export exactly matches `../../scripts/chef360/download-install-server.sh`. Verify commands, ports, paths, prerequisites, and product behavior against `sources.md`. Confirm that Markdown structure and internal references remain valid.
+
+Rebuild the PDF with `../../scripts/content/build-quick-start-pdf.py` after changing the export or `customer-pdf.css`. Use the pinned packages in `../../scripts/content/requirements-quick-start-pdf.txt`.
