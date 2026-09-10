@@ -1,0 +1,17 @@
+{
+  "repositories": {
+    "PUBLIC_OR_AUTHORIZED_REPOSITORY_NAME": {
+      "include": ["README.md", "docs/**", "Policyfile.rb", "metadata.rb", "recipes/**"],
+      "purpose": "Describe why this repository belongs in the local protected corpus"
+    }
+  },
+  "allowed_extensions": [
+    ".md", ".txt", ".rb", ".json", ".yaml", ".yml", ".sh", ".ps1", ".tf", ".tfvars", ".tftpl", ".tpl", ".hcl"
+  ],
+  "excluded_path_parts": [
+    ".git", "vendor", "node_modules", "coverage", "test/fixtures", "spec/fixtures", "Policyfile.lock.json"
+  ],
+  "max_file_bytes": 524288,
+  "chunk_characters": 3000,
+  "chunk_overlap_characters": 300
+}

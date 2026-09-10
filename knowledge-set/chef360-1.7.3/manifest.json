@@ -1,0 +1,181 @@
+{
+  "name": "chef360-1.7.3",
+  "version": "1.7.3",
+  "source": "https://docs.chef.io/360/1.7/",
+  "description": "Chef 360 Platform 1.7.3 knowledge set for MCP service creation",
+  "created": "2026-08-18",
+  "documents": [
+    {
+      "id": "operations-azure-node-access",
+      "path": "operations/azure-node-access.md",
+      "title": "Azure Node Access Prerequisite",
+      "topics": ["azure", "nodes", "nsg", "public-ip", "ssh", "operations"]
+    },
+    {
+      "id": "operations-infrastructure-requirements",
+      "path": "operations/infrastructure-requirements.md",
+      "title": "Chef 360 Infrastructure Requirements",
+      "topics": ["infrastructure", "requirements", "storage", "networking", "dns", "operations"]
+    },
+    {
+      "id": "operations-config-values-installation",
+      "path": "operations/config-values-installation.md",
+      "title": "Chef 360 1.7.3 ConfigValues and Command-Line Installation",
+      "topics": ["installation", "cli", "kots", "config-values", "noninteractive", "operations"]
+    },
+    {
+      "id": "operations-infrastructure-automation",
+      "path": "operations/infrastructure-automation.md",
+      "title": "Provider-Neutral Infrastructure Automation",
+      "topics": ["automation", "terraform", "aws", "azure", "kvm", "hyper-v", "proxmox", "operations"]
+    },
+    {
+      "id": "operations-kvm-lab-deployment",
+      "path": "operations/kvm-lab-deployment.md",
+      "title": "KVM Lab Deployment for Chef 360 1.7.3",
+      "topics": ["kvm", "libvirt", "autoinstall", "netplan", "xfs", "tls", "mailpit", "installation"]
+    },
+    {
+      "id": "architecture-overview",
+      "path": "architecture/overview.md",
+      "title": "Platform Service Overview",
+      "topics": ["services", "architecture", "components", "deployment"]
+    },
+    {
+      "id": "architecture-access-controls",
+      "path": "architecture/access-controls.md",
+      "title": "Access Control",
+      "topics": ["rbac", "policies", "roles", "authentication", "authorization"]
+    },
+    {
+      "id": "apis-reference",
+      "path": "apis/api-reference.md",
+      "title": "API Reference",
+      "topics": ["api", "endpoints", "authentication", "headers"]
+    },
+    {
+      "id": "courier-overview",
+      "path": "courier/overview.md",
+      "title": "Chef Courier Overview",
+      "topics": ["courier", "jobs", "scheduling", "interpreters"]
+    },
+    {
+      "id": "courier-job-template",
+      "path": "courier/job-template.md",
+      "title": "Courier Job Template",
+      "topics": ["courier", "jobs", "template", "json", "yaml", "interpreters"]
+    },
+    {
+      "id": "node-management-overview",
+      "path": "node-management/overview.md",
+      "title": "Node Management Overview",
+      "topics": ["nodes", "enrollment", "skills", "filters", "tags"]
+    },
+    {
+      "id": "node-management-skills",
+      "path": "node-management/skills.md",
+      "title": "Skills",
+      "topics": ["skills", "agents", "assemblies", "lifecycle"]
+    },
+    {
+      "id": "node-management-enrollment",
+      "path": "node-management/enrollment.md",
+      "title": "Node Enrollment",
+      "topics": ["enrollment", "self-enrollment", "bulk", "cookbook"]
+    },
+    {
+      "id": "node-management-filters-tags",
+      "path": "node-management/filters-tags.md",
+      "title": "Node Filters and Tags",
+      "topics": ["filters", "tags", "node-lists", "search"]
+    },
+    {
+      "id": "dsm-overview",
+      "path": "dsm/overview.md",
+      "title": "Declarative State Management",
+      "topics": ["dsm", "cookbooks", "policies", "migration"]
+    },
+    {
+      "id": "platform-authentication",
+      "path": "platform-services/authentication.md",
+      "title": "Platform Authentication",
+      "topics": ["authentication", "oauth", "rbac", "api-tokens", "users"]
+    },
+    {
+      "id": "platform-tenants",
+      "path": "platform-services/tenants.md",
+      "title": "Tenants and OUs",
+      "topics": ["tenants", "organizational-units", "multi-tenant"]
+    },
+    {
+      "id": "cli-tools",
+      "path": "cli/tools.md",
+      "title": "CLI Tools Overview",
+      "topics": ["cli", "tools", "commands"]
+    },
+    {
+      "id": "cli-chef-courier-cli",
+      "path": "cli/chef-courier-cli.md",
+      "title": "chef-courier-cli Reference",
+      "topics": ["cli", "courier", "jobs", "schedules"]
+    },
+    {
+      "id": "cli-chef-node-management-cli",
+      "path": "cli/chef-node-management-cli.md",
+      "title": "chef-node-management-cli Reference",
+      "topics": ["cli", "nodes", "skills", "filters", "tags"]
+    },
+    {
+      "id": "cli-chef-platform-auth-cli",
+      "path": "cli/chef-platform-auth-cli.md",
+      "title": "chef-platform-auth-cli Reference",
+      "topics": ["cli", "users", "roles", "tokens", "tenants", "licenses"]
+    },
+    {
+      "id": "glossary",
+      "path": "glossary/terms.md",
+      "title": "Glossary",
+      "topics": ["glossary", "definitions", "terminology"]
+    },
+    {
+      "id": "lab-topology",
+      "path": "lab/topology.md",
+      "title": "Local Chef Lab Topology",
+      "topics": ["kvm", "libvirt", "lab", "workstation", "chef360", "automate", "nodes"]
+    },
+    {
+      "id": "chef-automate-overview",
+      "path": "automate/overview.md",
+      "title": "Chef Automate Overview and Operations",
+      "topics": ["automate", "connector", "compliance", "reporting", "api", "iam", "data-collection", "upgrade"]
+    },
+    {
+      "id": "chef-inspec-overview",
+      "path": "inspec/overview.md",
+      "title": "Chef InSpec 5.24 Overview and Operations",
+      "topics": ["inspec", "compliance-as-code", "profiles", "controls", "scanning", "reporters"]
+    },
+    {
+      "id": "chef-workstation-overview",
+      "path": "workstation/overview.md",
+      "title": "Chef Workstation 25 Overview and Operations",
+      "topics": ["workstation", "knife", "policyfile", "test-kitchen", "cookstyle", "cli"]
+    }
+  ],
+  "documented_workflows": [
+    "node-management",
+    "courier-jobs",
+    "dsm-operations",
+    "user-management",
+    "role-management",
+    "tenant-management",
+    "api-token-management",
+    "skill-management",
+    "node-enrollment",
+    "job-scheduling",
+    "compliance-scanning",
+    "lab-inventory",
+    "infrastructure-planning",
+    "installation-validation"
+  ]
+}

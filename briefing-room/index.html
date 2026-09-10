@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111214" />
+    <title>Chef 360 Deployment Control Plane</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand-row">
+          <div class="brand-mark">C</div>
+          <div class="brand-copy">
+            <strong>Chef 360</strong>
+            <span>Control Plane</span>
+          </div>
+          <button class="icon-button sidebar-toggle" id="sidebarToggle" type="button" aria-label="Collapse navigation" title="Collapse navigation">
+            <i data-lucide="panel-left-close"></i>
+          </button>
+        </div>
+
+        <nav class="primary-nav" aria-label="Primary navigation">
+          <button class="nav-item active" type="button" data-view="deployments" title="Deployments">
+            <i data-lucide="layers-3"></i><span>Deployments</span><b>3</b>
+          </button>
+          <button class="nav-item" type="button" data-view="nodes" title="Nodes">
+            <i data-lucide="server"></i><span>Nodes</span><b>12</b>
+          </button>
+          <button class="nav-item" type="button" data-view="credentials" title="Credentials">
+            <i data-lucide="key-round"></i><span>Credentials</span>
+          </button>
+          <button class="nav-item" type="button" data-view="activity" title="Activity Log">
+            <i data-lucide="scroll-text"></i><span>Activity Log</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-bottom">
+          <div class="status-line"><span class="dot dot-green"></span><span>All systems operational</span></div>
+          <p>v1.7.3 · build 4821</p>
+        </div>
+      </aside>
+
+      <div class="app-main">
+        <header class="topbar">
+          <button class="icon-button mobile-menu" id="mobileMenu" type="button" aria-label="Open navigation" title="Open navigation">
+            <i data-lucide="menu"></i>
+          </button>
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <span>Deployments</span><i data-lucide="chevron-right"></i><strong>New Installation</strong>
+          </nav>
+          <div class="topbar-actions">
+            <button class="text-button" id="openDocs" type="button"><i data-lucide="book-open"></i>Docs</button>
+            <button class="icon-button" id="notifications" type="button" aria-label="Notifications" title="Notifications">
+              <i data-lucide="bell"></i><span class="notification-dot"></span>
+            </button>
+            <button class="avatar" id="profileButton" type="button" aria-label="Open user menu">MB</button>
+          </div>
+        </header>
+
+        <main class="workspace">
+          <section class="page-heading">
+            <div>
+              <p class="eyebrow">Provisioning workspace</p>
+              <h1>New Chef 360 Deployment</h1>
+              <p>Configure the target host, certificates, and bootstrap credentials.</p>
+            </div>
+            <div class="environment-summary">
+              <span>Target environment</span>
+              <strong>Lab / Ubuntu 24.04</strong>
+            </div>
+          </section>
+
+          <div class="workspace-grid">
+            <form class="form-card" id="deploymentForm" novalidate>
+              <div class="section-block">
+                <div class="section-title">
+                  <span>01</span>
+                  <div><h2>Host Configuration</h2><p>Identity and network settings for the Chef 360 node.</p></div>
+                </div>
+                <div class="field-grid">
+                  <label class="field full">
+                    <span>Hostname <b>*</b></span>
+                    <input id="hostname" name="hostname" type="text" value="chef360-2.demo.lab" required />
+                  </label>
+                  <label class="field">
+                    <span>IP Address <b>*</b></span>
+                    <input id="ipAddress" name="ipAddress" type="text" value="10.0.0.40" required />
+                  </label>
+                  <label class="field">
+                    <span>CIDR <b>*</b></span>
+                    <select id="cidr" name="cidr"><option>/24</option><option>/23</option><option>/22</option></select>
+                  </label>
+                  <label class="field">
+                    <span>Gateway <b>*</b></span>
+                    <input id="gateway" name="gateway" type="text" value="10.0.0.1" required />
+                  </label>
+                  <label class="field">
+                    <span>DNS Server <b>*</b></span>
+                    <input id="dns" name="dns" type="text" value="8.8.8.8" required />
+                  </label>
+                </div>
+              </div>
+
+              <div class="section-block">
+                <div class="section-title">
+                  <span>02</span>
+                  <div><h2>TLS Certificates</h2><p>Certificate material for the Admin Console and gateway.</p></div>
+                </div>
+                <div class="file-list">
+                  <label class="file-row">
+                    <span class="file-icon"><i data-lucide="file-key-2"></i></span>
+                    <span><strong>Server Certificate</strong><small>PEM encoded leaf certificate</small></span>
+                    <span class="file-input"><input type="file" accept=".crt,.pem" data-file="cert" /><b id="certName">chef360-2.crt</b><i data-lucide="upload"></i></span>
+                  </label>
+                  <label class="file-row">
+                    <span class="file-icon"><i data-lucide="key-round"></i></span>
+                    <span><strong>Private Key</strong><small>Matching unencrypted private key</small></span>
+                    <span class="file-input"><input type="file" accept=".key,.pem" data-file="key" /><b id="keyName">chef360-2.key</b><i data-lucide="upload"></i></span>
+                  </label>
+                  <label class="file-row">
+                    <span class="file-icon"><i data-lucide="files"></i></span>
+                    <span><strong>CA Chain</strong><small>Issuing and root CA certificates</small></span>
+                    <span class="file-input"><input type="file" accept=".crt,.pem" data-file="chain" /><b id="chainName">chef360-2.chain.crt</b><i data-lucide="upload"></i></span>
+                  </label>
+                </div>
+                <div class="success-banner"><i data-lucide="circle-check"></i><span><strong>Certificate chain validated successfully.</strong><small>CN=chef360-2.demo.lab · Expires Sep 10, 2027</small></span></div>
+              </div>
+
+              <div class="section-block">
+                <div class="section-title">
+                  <span>03</span>
+                  <div><h2>Admin Console Access</h2><p>Set initial credentials for the local console.</p></div>
+                </div>
+                <div class="field-grid password-grid">
+                  <label class="field">
+                    <span>Admin Password <b>*</b></span>
+                    <span class="input-action"><input id="password" name="password" type="password" value="devsecops" required minlength="8" /><button type="button" data-toggle-password="password" aria-label="Show password" title="Show password"><i data-lucide="eye"></i></button></span>
+                  </label>
+                  <label class="field">
+                    <span>Confirm Password <b>*</b></span>
+                    <span class="input-action"><input id="confirmPassword" name="confirmPassword" type="password" value="devsecops" required minlength="8" /><button type="button" data-toggle-password="confirmPassword" aria-label="Show password" title="Show password"><i data-lucide="eye"></i></button></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="section-block last-section">
+                <div class="section-title">
+                  <span>04</span>
+                  <div><h2>Advanced Options</h2><p>Execution preferences for this deployment.</p></div>
+                </div>
+                <div class="option-list">
+                  <label class="option-row"><span><strong>Use strict preflight checks</strong><small>Block deployment on warnings or failed requirements.</small></span><input type="checkbox" id="strictPreflight" checked /><i></i></label>
+                  <label class="option-row"><span><strong>Install system updates</strong><small>Run apt update and unattended upgrade before installation.</small></span><input type="checkbox" id="systemUpdates" checked /><i></i></label>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button class="button secondary" id="validateButton" type="button"><i data-lucide="shield-check"></i>Validate Configuration</button>
+                <button class="button primary" id="deployButton" type="submit"><i data-lucide="rocket"></i>Start Deployment</button>
+              </div>
+            </form>
+
+            <aside class="summary-card">
+              <div class="summary-head">
+                <div><p class="eyebrow">Review</p><h2>Deployment Summary</h2></div>
+                <span class="status-badge ready"><i data-lucide="circle-check"></i>Ready</span>
+              </div>
+
+              <div class="summary-section">
+                <div class="summary-title"><span>Target Host</span><button type="button" data-edit="hostname">Edit</button></div>
+                <dl>
+                  <div><dt>Hostname</dt><dd id="summaryHostname">chef360-2.demo.lab</dd></div>
+                  <div><dt>IP Address</dt><dd id="summaryIp">10.0.0.40/24</dd></div>
+                  <div><dt>Gateway</dt><dd id="summaryGateway">10.0.0.1</dd></div>
+                  <div><dt>DNS</dt><dd id="summaryDns">8.8.8.8</dd></div>
+                </dl>
+              </div>
+
+              <div class="summary-section">
+                <div class="summary-title"><span>TLS Configuration</span><button type="button" data-edit="cert">Edit</button></div>
+                <dl>
+                  <div><dt>Certificate</dt><dd id="summaryCert">chef360-2.crt</dd></div>
+                  <div><dt>Private Key</dt><dd id="summaryKey">chef360-2.key</dd></div>
+                  <div><dt>CA Chain</dt><dd id="summaryChain">chef360-2.chain.crt</dd></div>
+                </dl>
+              </div>
+
+              <div class="summary-section credentials">
+                <div class="summary-title"><span>Credentials</span></div>
+                <dl>
+                  <div><dt>Username</dt><dd><code id="usernameValue">chef</code><button class="copy-button" type="button" data-copy="chef" aria-label="Copy username" title="Copy username"><i data-lucide="copy"></i></button></dd></div>
+                  <div><dt>Password</dt><dd><code id="summaryPassword">••••••••••••</code><button class="copy-button" type="button" id="revealSummaryPassword" aria-label="Reveal password" title="Reveal password"><i data-lucide="eye"></i></button><button class="copy-button" type="button" data-copy-password aria-label="Copy password" title="Copy password"><i data-lucide="copy"></i></button></dd></div>
+                </dl>
+              </div>
+
+              <div class="warning-banner"><i data-lucide="triangle-alert"></i><span><strong>This action cannot be undone.</strong><small>Starting deployment provisions the server and applies the reviewed configuration.</small></span></div>
+            </aside>
+          </div>
+        </main>
+
+        <footer class="status-footer">
+          <div><span class="dot dot-green"></span><span>System Status</span><strong>Operational</strong></div>
+          <div><span>Environment</span><strong>Lab</strong></div>
+          <div><span>Version</span><strong>1.7.3</strong></div>
+          <div><span>Last Sync</span><strong>Just now</strong></div>
+          <div class="session"><span>Session</span><code>••••••••••••</code><button class="copy-button" type="button" data-copy="session_7f4d91c2" aria-label="Copy session identifier" title="Copy session identifier"><i data-lucide="copy"></i></button></div>
+        </footer>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="modal-backdrop" id="deployModal" aria-hidden="true">
+      <section class="deploy-modal" role="dialog" aria-modal="true" aria-labelledby="deployTitle">
+        <div class="deploy-icon"><i data-lucide="server-cog"></i></div>
+        <p class="eyebrow">Deployment sequence</p>
+        <h2 id="deployTitle">Provisioning Chef 360</h2>
+        <p id="deployStatus">Validating host configuration…</p>
+        <div class="progress-track"><span id="deployProgress"></span></div>
+        <div class="modal-actions">
+          <button class="button secondary" id="cancelDeploy" type="button">Cancel</button>
+          <button class="button primary hidden" id="closeDeploy" type="button">Close</button>
+        </div>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+#!/bin/bash
+set -euxo pipefail
+
+hostnamectl set-hostname "${hostname}"
+
+if command -v dnf >/dev/null 2>&1; then
+  dnf install -y curl tar jq unzip xfsprogs
+elif command -v yum >/dev/null 2>&1; then
+  yum install -y curl tar jq unzip xfsprogs
+fi
+
+mkdir -p /etc/chef360
+
+cat >/etc/chef360/bootstrap.env <<EOF
+HOSTNAME=${hostname}
+CHEF360_ROLE=${role}
+EOF
+
+systemctl enable --now amazon-ssm-agent || true
+
+cat >/etc/motd <<EOF
+Chef 360 host bootstrap complete.
+
+Next steps:
+1. Download the Chef 360 installer package.
+2. Copy the license file to this host.
+3. Run sudo ./chef-360 install --license license.yaml on the primary node.
+4. Join additional nodes from the Admin Console for multi-node topologies.
+EOF
+
+${extra_script}

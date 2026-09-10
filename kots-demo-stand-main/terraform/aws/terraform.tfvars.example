@@ -1,0 +1,32 @@
+////////////////////////////////
+// AWS Connection
+
+aws_region = "us-west-2"
+aws_profile = "solutions-architects"
+aws_key_pair_file = "~/.ssh/<KEY_FILE_NAME>.pem"
+aws_key_pair_name = "<KEY_PAIR_NAME>"
+
+////////////////////////////////
+// Object Tags
+
+tag_name = "<NAME>"
+tag_dept = "<DEPARTMENT>"
+tag_contact = "<EMAIL>"
+tag_application = "<APPLICATION>"
+tag_project = "<PROJECT>"
+tag_ttl = "48"
+tag_customer = "<CUSTOMER>"
+
+////////////////////////////////
+// Chef 360
+
+authorization_code = "<AUTHORIZATION_CODE>"
+console_password = "<CONSOLE_PASSWORD>"
+tenant_tld = "<TENANT_TLD>"
+tenant_subdomain = "<TENANT_SUBDOMAIN>"
+
+tenant_name = "<TENANT_NAME>"
+org_unit_name = "<ORG_UNIT_NAME>"
+admin_first_name = "<ADMIN_FIRST_NAME>"
+admin_last_name = "<ADMIN_LAST_NAME>"
+admin_email = "<ADMIN_EMAIL>"

@@ -1,0 +1,66 @@
+# Local credentials and runtime state
+.azure/
+.azure-local/
+.kvm/
+.env
+.env.*
+!.env.example
+chef360.vars
+config/chef360.parameters.env
+config/azure-two-linux.env
+config/kvm-chef360.env
+infra/azure/azure-two-linux-lowcost.parameters.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.token
+*signed*config*
+/chef-360
+/chef-360.airgap
+/chef-360-*.tgz
+/license.yaml
+
+# Generated Chef 360 request/response files
+defined-skills.in
+skills-assembly.in
+skills-override.in
+*.out
+enroll-*.json
+*-skill.json
+skill-assembly.json
+node-override-setting.json
+cohort.json
+job*.json
+courier-runner-key.pem
+
+# Protected local Chef CFT knowledge and host context
+data/
+docs/chef-cft-metadata-index.*
+docs/chef-cft-knowledge-guide.md
+config/chef-cft-corpus.json
+AGENTS.md
+azure-government-tags.md
+docs/mcp-service-context.md
+
+# Customer-specific compliance exports and generated indexes
+docs/progress-chef-compliance-content*
+scripts/content/progress_chef_content_index.py
+
+# Language and build output
+**/__pycache__/
+*.py[cod]
+**/node_modules/
+**/dist/
+coverage/
+.coverage
+.pytest_cache/
+.mypy_cache/
+
+# Obsolete pre-normalization package location
+src/public-mcp/
+
+# Editors and operating systems
+.DS_Store
+.vscode/
+.idea/

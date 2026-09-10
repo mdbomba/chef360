@@ -1,0 +1,30 @@
+aws_region        = "us-east-1"
+environment       = "production"
+name_prefix       = "chef360-prod"
+topology          = "single_node"
+key_name          = "my-ec2-key"
+node_ami_id       = "ami-xxxxxxxxxxxxxxxxx"
+ssh_cidr_blocks   = ["203.0.113.10/32"]
+admin_cidr_blocks = ["203.0.113.10/32"]
+
+# Optional explicit AZ selection.
+# availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
+
+# Optional DNS.
+# enable_route53   = true
+# route53_zone_id  = "Z1234567890ABC"
+# domain_name      = "example.com"
+# admin_console_hostname = "admin"
+# tenant_hostname        = "chef360"
+
+# Optional managed PostgreSQL.
+# enable_rds           = true
+# rds_master_password  = "replace-me"
+
+# Optional S3 job and log storage.
+# enable_s3         = true
+# s3_bucket_prefix  = "chef360-prod"
+
+common_tags = {
+  Owner = "platform-team"
+}
