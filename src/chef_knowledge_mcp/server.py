@@ -943,6 +943,8 @@ class McpServer:
                     "recommend_chef_references",
                 }
             )
+        if self.lab:
+            public.update({"list_lab_machines", "inspect_lab_machine", "chef_workstation_versions"})
         return [tool for tool in TOOLS if tool["name"] in public]
 
     def available_resources(self) -> list[dict[str, Any]]:

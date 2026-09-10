@@ -2,9 +2,6 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/../lib/load-parameters.sh"
-
 VERSION="1.7.3"
 BASE_URL="https://appservice.chef360.chef.io/embedded/chef-360/stable/${VERSION}"
 
@@ -22,18 +19,14 @@ case "$AIRGAP" in
         ;;
 esac
 
-# Take the authorization code from the environment or ~/.bashrc when present,
-# otherwise prompt for it. Passing the header via stdin keeps the code out of
-# curl's arguments.
-if ! load_secret AUTH_TOKEN "${HOME}/.bashrc" "${HOME}/.profile"; then
-    read -r -s -p "Enter your Chef 360 authorization code: " AUTH_TOKEN
-    printf '\n'
-fi
-trap 'unset AUTH_TOKEN' EXIT
+read -r -s -p "Enter your Chef 360 authorization code: " AUTH
+printf '\n'
+trap 'unset AUTH' EXIT
 
-printf 'Authorization: %s\n' "$AUTH_TOKEN" |
+# Read the header from stdin so the authorization code is not in curl's arguments.
+printf 'Authorization: %s\n' "$AUTH" |
     curl --fail --location --show-error --header @- "$DOWNLOAD_URL" -o "$ARCHIVE"
-unset AUTH_TOKEN
+unset AUTH
 trap - EXIT
 
 tar -xzf "$ARCHIVE"

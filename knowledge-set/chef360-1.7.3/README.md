@@ -40,6 +40,7 @@ Load any markdown file as context for an MCP service to enable Chef 360 Platform
 - Chef Automate architecture, APIs, data flow, and operations
 - Chef InSpec profiles, controls, execution, and result handling
 - Chef Workstation tools, configuration, and development workflows
+- Single-node hyperconverged quick-start installation through Apps Console sign-in, including Admin Console and Apps Console separation, Mailpit activation, online and air-gapped install, and Velero plugin pre-loading
 - Provider-neutral infrastructure requirements and automation boundaries
 - Chef 360 command-line installation with version-specific ConfigValues
 - AWS, Azure, KVM, Hyper-V, and Proxmox guest realization guidance

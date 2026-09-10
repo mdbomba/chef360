@@ -38,7 +38,7 @@ class ChefKnowledgeMcpTests(unittest.TestCase):
 
     def test_public_manifest_has_expected_documents(self) -> None:
         self.assertEqual("1.7.3", self.public_knowledge.manifest["version"])
-        self.assertEqual(26, len(self.public_knowledge.documents))
+        self.assertEqual(27, len(self.public_knowledge.documents))
         self.assertTrue(
             {
                 "chef-automate-overview",
@@ -48,6 +48,7 @@ class ChefKnowledgeMcpTests(unittest.TestCase):
                 "operations-config-values-installation",
                 "operations-infrastructure-automation",
                 "operations-kvm-lab-deployment",
+                "operations-quick-start-installation",
             }.issubset(document["id"] for document in self.public_knowledge.documents)
         )
 
@@ -87,6 +88,22 @@ class ChefKnowledgeMcpTests(unittest.TestCase):
         )
         self.assertTrue(
             any(match["id"] == "operations-config-values-installation" for match in result["matches"])
+        )
+
+    def test_public_search_finds_single_node_quick_start(self) -> None:
+        result = self.public_knowledge.search(
+            {"query": "single-node hyperconverged air-gapped Velero Mailpit Apps Console", "limit": 5}
+        )
+        self.assertTrue(
+            any(match["id"] == "operations-quick-start-installation" for match in result["matches"])
+        )
+
+    def test_public_search_finds_admin_apps_console_terminology(self) -> None:
+        result = self.public_knowledge.search(
+            {"query": "Admin Console 30000 Apps Console 31000", "limit": 5}
+        )
+        self.assertTrue(
+            any(match["id"] == "operations-quick-start-installation" for match in result["matches"])
         )
 
     def test_public_search_finds_automate_connector_configuration(self) -> None:

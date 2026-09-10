@@ -3,7 +3,7 @@
   "version": "1.7.3",
   "source": "https://docs.chef.io/360/1.7/",
   "description": "Chef 360 Platform 1.7.3 knowledge set for MCP service creation",
-  "created": "2026-08-18",
+  "created": "2026-09-10",
   "documents": [
     {
       "id": "operations-azure-node-access",
@@ -34,6 +34,12 @@
       "path": "operations/kvm-lab-deployment.md",
       "title": "KVM Lab Deployment for Chef 360 1.7.3",
       "topics": ["kvm", "libvirt", "autoinstall", "netplan", "xfs", "tls", "mailpit", "installation"]
+    },
+    {
+      "id": "operations-quick-start-installation",
+      "path": "operations/quick-start-installation.md",
+      "title": "Chef 360 1.7.3 Single-Node Hyperconverged Quick Start",
+      "topics": ["installation", "single-node", "hyperconverged", "non-ha", "admin-console", "apps-console", "mailpit", "airgap", "velero", "license", "preflight", "operations"]
     },
     {
       "id": "architecture-overview",
@@ -176,6 +182,7 @@
     "compliance-scanning",
     "lab-inventory",
     "infrastructure-planning",
-    "installation-validation"
+    "installation-validation",
+    "quick-start-installation"
   ]
 }
