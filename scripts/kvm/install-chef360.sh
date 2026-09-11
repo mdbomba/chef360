@@ -38,6 +38,17 @@ done
 [[ -n "${ADMIN_CONSOLE_PASSWORD}" ]] || fail "CHEF360_ADMIN_CONSOLE_PASSWORD is empty"
 (( ${#ADMIN_CONSOLE_PASSWORD} >= 6 )) || fail "Admin Console password must be at least six characters"
 
+# Chef 360 1.7.3 blocks its application deploy on any preflight warning. Host
+# preflights are enforced regardless; tolerant mode (opt-in) lets an
+# environment-specific application warning through instead of failing install.
+ignore_preflights_raw="${CHEF360_IGNORE_APP_PREFLIGHTS:-}"
+[[ "${ignore_preflights_raw}" =~ ^[0-9A-Za-z_]+$ ]] || ignore_preflights_raw=""
+if [[ "${ignore_preflights_raw}" =~ ^(1|true|yes)$ ]]; then
+  app_preflight_mode="tolerant; application warnings allowed (--ignore-app-preflights)"
+else
+  app_preflight_mode="enforced; no bypass flags"
+fi
+
 cat <<EOF
 Chef 360 1.7.3 installation plan
   Target:              ${VM_USER}@${VM_IP} (${VM_HOSTNAME})
@@ -49,7 +60,7 @@ Chef 360 1.7.3 installation plan
   Admin Console cert:  ${REMOTE_CERT}
   Admin Console key:   ${REMOTE_KEY}
   Chef 360 endpoint:   https://${VM_HOSTNAME}:31000
-  Strict preflights:   enabled; no bypass flags
+  App preflights:      ${app_preflight_mode}
   Install log:         ${REMOTE_LOG}
 
 Exact remote installer arguments:
@@ -62,7 +73,7 @@ Exact remote installer arguments:
     --admin-console-password <redacted>
     --data-dir /var/lib/embedded-cluster
     --network-interface enp1s0
-    --yes
+    --yes${ignore_preflights_raw:+ --ignore-app-preflights}
 EOF
 
 if [[ "${EXECUTE}" != true ]]; then
@@ -102,8 +113,11 @@ openssl verify -CAfile /etc/ssl/certs/ca-certificates.crt /opt/chef360/tls/chef3
 openssl verify -verify_hostname chef360-2.demo.lab -CAfile /etc/ssl/certs/ca-certificates.crt /opt/chef360/tls/chef360-2.crt
 REMOTE_CHECKS
 
+if ssh "${ssh_args[@]}" "${target}" 'ss -ltn 2>/dev/null | grep -q ":31000 "'; then
+  fail "Chef 360 appears to be installed already (${VM_IP}:31000 is listening)"
+fi
 if ssh "${ssh_args[@]}" "${target}" test -e /var/lib/embedded-cluster/k0s/pki/admin.conf; then
-  fail "Chef 360 or Embedded Cluster appears to be installed already"
+  log_step "Embedded Cluster state present; resuming the addon stage of the install"
 fi
 
 log_step "Starting Chef 360 1.7.3 installation on ${VM_HOSTNAME}"
@@ -111,8 +125,11 @@ printf '%s' "${ADMIN_CONSOLE_PASSWORD}" | \
   ssh "${ssh_args[@]}" "${target}" \
     "sudo -n sh -c 'umask 077; cat > /run/chef360-admin-console-password'"
 
-ssh "${ssh_args[@]}" "${target}" sudo -n bash -euo pipefail <<'REMOTE_INSTALL'
+ssh "${ssh_args[@]}" "${target}" \
+  sudo -n env CHEF360_IGNORE_APP_PREFLIGHTS="${ignore_preflights_raw}" bash -euo pipefail <<'REMOTE_INSTALL'
 umask 077
+ignore_app_preflights=""
+[[ "${CHEF360_IGNORE_APP_PREFLIGHTS:-}" =~ ^(1|true|yes)$ ]] && ignore_app_preflights=--ignore-app-preflights
 password_file=/run/chef360-admin-console-password
 trap 'rm -f -- "$password_file"' EXIT
 test -s "$password_file"
@@ -127,6 +144,7 @@ admin_console_password="$(cat "$password_file")"
   --data-dir /var/lib/embedded-cluster \
   --network-interface enp1s0 \
   --yes \
+  ${ignore_app_preflights} \
   2>&1 | tee /var/log/chef360-install.log
 touch /var/lib/chef360-install-complete
 REMOTE_INSTALL

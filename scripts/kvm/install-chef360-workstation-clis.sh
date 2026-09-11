@@ -61,14 +61,25 @@ trap 'rm -rf -- "$work_dir"' EXIT
 download_installer() {
   local endpoint="$1"
   local output="$2"
-  curl --fail --silent --show-error --location --max-time 60 \
-    --cacert "${CHEF360_TLS_CHAIN}" \
-    --resolve "${VM_HOSTNAME}:31000:${VM_IP}" \
-    "${SERVER}${endpoint}" \
-    --output "${output}"
-  [[ -s "${output}" ]] || fail "Downloaded installer is empty: ${endpoint}"
-  head -n 1 "${output}" | grep -Eq '^#!.*(ba)?sh' || fail "Downloaded content is not a shell script: ${endpoint}"
-  bash -n "${output}" || fail "Downloaded installer failed Bash syntax validation: ${endpoint}"
+  local attempt
+  local retries="${CLI_DOWNLOAD_RETRIES:-4}"
+  for attempt in $(seq 1 "${retries}"); do
+    if curl --fail --silent --show-error --location --max-time 60 \
+        --cacert "${CHEF360_TLS_CHAIN}" \
+        --resolve "${VM_HOSTNAME}:31000:${VM_IP}" \
+        "${SERVER}${endpoint}" \
+        --output "${output}" \
+        && [[ -s "${output}" ]] \
+        && head -n 1 "${output}" | grep -Eq '^#!.*(ba)?sh' \
+        && bash -n "${output}"; then
+      return 0
+    fi
+    if (( attempt < retries )); then
+      log_step "Retrying download of ${endpoint} (attempt ${attempt}/${retries})"
+      sleep "${CLI_DOWNLOAD_RETRY_DELAY:-5}"
+    fi
+  done
+  fail "Unable to download and validate ${endpoint} after ${retries} attempts"
 }
 
 standard_installer="${work_dir}/install.sh"

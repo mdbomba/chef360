@@ -121,13 +121,38 @@ The command uses:
 - `--tls-cert` and `--tls-key` for Admin Console TLS on port 30000.
 - `--config-values` for Chef 360 application and gateway configuration on port
   31000, including its certificate, private key, and CA chain.
-- Strict host and application preflights. No bypass flags are included.
+- Enforced host preflights. Application preflights run strict by default;
+  set `CHEF360_IGNORE_APP_PREFLIGHTS=1` to add `--ignore-app-preflights`.
 
 The reviewed lab ConfigValues sets `preflight::strict::mode` to `"0"`. This does
 not skip preflights; it permits an operator to deploy after reviewing accepted
-lab warnings. With strict mode set to `"1"`, observed storage-capacity and
-cluster-DNS warnings prevented automatic application deployment even though the
-per-node CPU, memory, storage, Kubernetes, and StorageClass checks passed.
+lab warnings. With strict mode set to `"1"`, Chef 360 1.7.3 blocks application
+deployment on any preflight warning, including two warnings this topology cannot
+clear:
+
+- `Total Storage Capacity` — a capacity caution on the 250 GiB data disk; the
+  per-node storage check still passes at `>= 200Gi`.
+- `Cluster DNS Resolution — No matching files` — the application analyzer cannot
+  find the file it globs for; guest DNS itself is healthy (systemd-resolved
+  stub -> 10.0.0.1).
+
+Because only warnings (no failures) hold the deploy, `install-chef360.sh`
+accepts an opt-in tolerant mode that uses the installer's own documented flag
+while still enforcing host preflights:
+
+```bash
+CHEF360_IGNORE_APP_PREFLIGHTS=1 scripts/kvm/install-chef360.sh --execute
+```
+
+If an install stops partway (for example after a failed addon stage), the script
+treats an already-listening port 31000 as "installed" and otherwise allows a
+retry. The vendor installer itself regards any existing
+`/var/lib/embedded-cluster` as an installed system and refuses to reinstall
+until wiped:
+
+```bash
+sudo ./chef-360 reset --yes   # on the guest, then re-run install-chef360.sh
+```
 
 ### Validate and finish administrator activation
 
@@ -223,6 +248,21 @@ chef360-2_rca.crt
 - The CA signing key is never required or transferred.
 
 ## Troubleshooting and Cleanup
+
+### Transient install-time conditions
+
+Two conditions self-resolve and do not indicate a broken deployment:
+
+- **NTP not synchronized.** A host preflight can fail with "NTP is enabled but
+  the system clock is not synchronized" shortly after first boot before
+  `systemd-timesyncd` completes its initial sync. Confirm
+  `timedatectl` reports "System clock synchronized: yes" and re-run
+  `install-chef360.sh`.
+- **Bundled tools HTTP 401.** Immediately after install, the
+  `:31000/platform/bundledtools/...` CLI download endpoint can briefly return
+  401 while platform initialization settles. `install-chef360-workstation-clis.sh`
+  retries downloads (`CLI_DOWNLOAD_RETRIES`, default 4), and validation passes on
+  a later run.
 
 ### Node `/etc/hosts` does not configure pod DNS
 
