@@ -31,6 +31,38 @@ verified to have `ftype=1`. Swap is not created and any swap entries are disable
 The scripts in `scripts/kvm/` default to dry-run where an operation would modify
 the host, libvirt, or guest. Mutating entry points require `--execute`.
 
+### Prepare the KVM host and assets
+
+Run these once on the libvirt host to automate what was previously manual
+staging. Each mutating script prints a plan unless `--execute` is passed.
+
+```bash
+scripts/kvm/bootstrap-kvm-host.sh --execute
+scripts/kvm/fetch-ubuntu-iso.sh --execute
+scripts/kvm/issue-chef360-certs.sh --execute
+AUTH_TOKEN='<authorization-code>' scripts/kvm/acquire-chef360-assets.sh --execute
+```
+
+- `bootstrap-kvm-host.sh` installs the libvirt/QEMU tooling (including
+  `genisoimage` and `xorriso`), enables `libvirtd`, starts/autostarts the
+  `default` network, creates the `/install/ubuntu` and `/install/chef-360/1.7`
+  staging directories, and generates `~/.ssh/fury_rsa` when absent.
+- `fetch-ubuntu-iso.sh` downloads `ubuntu-24.04.4-live-server-amd64.iso` from
+  `releases.ubuntu.com` and installs it only after its SHA-256 matches the
+  published `SHA256SUMS`. Override with `UBUNTU_RELEASE` / `ISO_NAME`.
+- `issue-chef360-certs.sh` issues the root CA, issuing CA, and leaf certificate
+  into `~/certs` for `{VM_HOSTNAME}` / `{VM_IP}`. The CA signing keys stay under
+  `.kvm/40_chef360/ca/` (mode 0700) and are never copied to the guest.
+- `acquire-chef360-assets.sh` downloads the `chef-360` installer and
+  `license.yaml` from the Chef 360 distribution endpoint (online by default,
+  `--airgap` for the full bundle), verifies the 1.7.3 version, and stages both
+  files under `/install/chef-360/1.7/`. The authorization code must be supplied
+  through `AUTH_TOKEN` (or `--auth-token`) so it is never placed in curl's
+  arguments.
+
+Host, certificate, and asset syntax checks run in CI via
+`bash scripts/ci/check-kvm-scripts.sh`.
+
 ### Prepare reviewed inputs
 
 ```bash
