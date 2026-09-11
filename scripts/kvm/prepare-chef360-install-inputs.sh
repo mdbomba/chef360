@@ -38,33 +38,33 @@ rm -rf -- "${CHEF360_STAGE_DIR}"
 install -d -m 0700 "${CHEF360_STAGE_DIR}/tls" "${CHEF360_STAGE_DIR}/ca"
 install -m 0700 "${CHEF360_INSTALLER_SOURCE}" "${CHEF360_STAGE_DIR}/chef-360"
 install -m 0600 "${CHEF360_LICENSE_SOURCE}" "${CHEF360_STAGE_DIR}/license.yaml"
-install -m 0600 "${CHEF360_CONFIG_FILE}" "${CHEF360_STAGE_DIR}/chef-config.yaml"
-install -m 0644 "${CHEF360_TLS_CERT}" "${CHEF360_STAGE_DIR}/tls/chef360-2.crt"
-install -m 0600 "${CHEF360_TLS_KEY}" "${CHEF360_STAGE_DIR}/tls/chef360-2.key"
-install -m 0644 "${CHEF360_TLS_CHAIN}" "${CHEF360_STAGE_DIR}/tls/chef360-2.chain.crt"
-install -m 0644 "${CHEF360_ISSUING_CA}" "${CHEF360_STAGE_DIR}/ca/chef360-2_ica.crt"
-install -m 0644 "${CHEF360_ROOT_CA}" "${CHEF360_STAGE_DIR}/ca/chef360-2_rca.crt"
+install -m 0600 "${CHEF360_CONFIG_FILE}" "${CHEF360_STAGE_DIR}/${VM_NAME}-config.yaml"
+install -m 0644 "${CHEF360_TLS_CERT}" "${CHEF360_STAGE_DIR}/tls/${VM_NAME}.crt"
+install -m 0600 "${CHEF360_TLS_KEY}" "${CHEF360_STAGE_DIR}/tls/${VM_NAME}.key"
+install -m 0644 "${CHEF360_TLS_CHAIN}" "${CHEF360_STAGE_DIR}/tls/${VM_NAME}.chain.crt"
+install -m 0644 "${CHEF360_ISSUING_CA}" "${CHEF360_STAGE_DIR}/ca/${VM_NAME}-ica.crt"
+install -m 0644 "${CHEF360_ROOT_CA}" "${CHEF360_STAGE_DIR}/ca/${VM_NAME}-rca.crt"
 
-for ca_file in "${CHEF360_STAGE_DIR}/ca/chef360-2_ica.crt" "${CHEF360_STAGE_DIR}/ca/chef360-2_rca.crt"; do
+for ca_file in "${CHEF360_STAGE_DIR}/ca/${VM_NAME}-ica.crt" "${CHEF360_STAGE_DIR}/ca/${VM_NAME}-rca.crt"; do
   openssl x509 -in "${ca_file}" -noout -text | grep -q 'CA:TRUE' || fail "Certificate is not a CA: ${ca_file}"
 done
-root_subject="$(openssl x509 -in "${CHEF360_STAGE_DIR}/ca/chef360-2_rca.crt" -noout -subject | sed 's/^subject=//')"
-root_issuer="$(openssl x509 -in "${CHEF360_STAGE_DIR}/ca/chef360-2_rca.crt" -noout -issuer | sed 's/^issuer=//')"
+root_subject="$(openssl x509 -in "${CHEF360_STAGE_DIR}/ca/${VM_NAME}-rca.crt" -noout -subject | sed 's/^subject=//')"
+root_issuer="$(openssl x509 -in "${CHEF360_STAGE_DIR}/ca/${VM_NAME}-rca.crt" -noout -issuer | sed 's/^issuer=//')"
 [[ "${root_subject}" == "${root_issuer}" ]] || fail "Root CA is not self-signed"
-openssl verify -CAfile "${CHEF360_STAGE_DIR}/ca/chef360-2_rca.crt" \
-  "${CHEF360_STAGE_DIR}/ca/chef360-2_ica.crt" >/dev/null || fail "Issuing CA validation failed"
+openssl verify -CAfile "${CHEF360_STAGE_DIR}/ca/${VM_NAME}-rca.crt" \
+  "${CHEF360_STAGE_DIR}/ca/${VM_NAME}-ica.crt" >/dev/null || fail "Issuing CA validation failed"
 
 openssl verify \
-  -CAfile "${CHEF360_STAGE_DIR}/ca/chef360-2_rca.crt" \
-  -untrusted "${CHEF360_STAGE_DIR}/ca/chef360-2_ica.crt" \
-  "${CHEF360_STAGE_DIR}/tls/chef360-2.crt" >/dev/null || fail "Split CA trust validation failed"
+  -CAfile "${CHEF360_STAGE_DIR}/ca/${VM_NAME}-rca.crt" \
+  -untrusted "${CHEF360_STAGE_DIR}/ca/${VM_NAME}-ica.crt" \
+  "${CHEF360_STAGE_DIR}/tls/${VM_NAME}.crt" >/dev/null || fail "Split CA trust validation failed"
 
 installer_sha="$(sha256sum "${CHEF360_STAGE_DIR}/chef-360" | cut -d' ' -f1)"
 license_sha="$(sha256sum "${CHEF360_STAGE_DIR}/license.yaml" | cut -d' ' -f1)"
-config_sha="$(sha256sum "${CHEF360_STAGE_DIR}/chef-config.yaml" | cut -d' ' -f1)"
-cert_sha="$(sha256sum "${CHEF360_STAGE_DIR}/tls/chef360-2.crt" | cut -d' ' -f1)"
-key_public_sha="$(openssl pkey -in "${CHEF360_STAGE_DIR}/tls/chef360-2.key" -pubout -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)"
-chain_sha="$(sha256sum "${CHEF360_STAGE_DIR}/tls/chef360-2.chain.crt" | cut -d' ' -f1)"
+config_sha="$(sha256sum "${CHEF360_STAGE_DIR}/${VM_NAME}-config.yaml" | cut -d' ' -f1)"
+cert_sha="$(sha256sum "${CHEF360_STAGE_DIR}/tls/${VM_NAME}.crt" | cut -d' ' -f1)"
+key_public_sha="$(openssl pkey -in "${CHEF360_STAGE_DIR}/tls/${VM_NAME}.key" -pubout -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)"
+chain_sha="$(sha256sum "${CHEF360_STAGE_DIR}/tls/${VM_NAME}.chain.crt" | cut -d' ' -f1)"
 
 cat >"${CHEF360_STAGE_MANIFEST}" <<EOF
 Chef 360 1.7.3 installation staging manifest
@@ -101,33 +101,37 @@ license.yaml
   mode: 0600 root:root
   sha256: ${license_sha}
 
-chef-config.yaml
+${VM_NAME}-config.yaml
   source: ${CHEF360_CONFIG_FILE}
   mode: 0600 root:root
   sha256: ${config_sha}
+  staged as: /opt/chef360/chef-config.yaml
 
-tls/chef360-2.crt
+tls/${VM_NAME}.crt
   source: ${CHEF360_TLS_CERT}
   mode: 0644 root:root
   sha256: ${cert_sha}
+  staged as: /opt/chef360/tls/chef360-2.crt
 
-tls/chef360-2.key
+tls/${VM_NAME}.key
   source: ${CHEF360_TLS_KEY}
   mode: 0600 root:root
   public-key-sha256: ${key_public_sha}
+  staged as: /opt/chef360/tls/chef360-2.key
 
-tls/chef360-2.chain.crt
+tls/${VM_NAME}.chain.crt
   source: ${CHEF360_TLS_CHAIN}
   mode: 0644 root:root
   sha256: ${chain_sha}
+  staged as: /opt/chef360/tls/chef360-2.chain.crt
   use: Chef 360 gateway root certificate field
 
-ca/chef360-2_ica.crt
+ca/${VM_NAME}-ica.crt
   source: ${CHEF360_ISSUING_CA}
   mode: 0644 root:root
   use: Ubuntu CA trust store
 
-ca/chef360-2_rca.crt
+ca/${VM_NAME}-rca.crt
   source: ${CHEF360_ROOT_CA}
   mode: 0644 root:root
   use: Ubuntu CA trust store

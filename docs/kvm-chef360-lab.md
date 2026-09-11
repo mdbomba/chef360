@@ -9,22 +9,30 @@ the VM before Chef 360 changes the guest.
 
 | Setting | Value |
 |---|---|
-| Libvirt domain | `40_chef360` |
-| Hostname | `chef360-2.demo.lab` |
-| Address | `10.0.0.40/24` |
-| Gateway | `10.0.0.1` |
+| Libvirt domain | `20_chef360` |
+| Hostname | `chef360.demo.lab` |
+| Address | `10.0.0.20/24` |
+| Gateway | `10.0.0.2` |
 | DNS resolver | `10.0.0.1` (libvirt dnsmasq) |
 | Network | libvirt `default`, NAT |
 | Guest | Ubuntu Server 24.04, upgraded during installation |
 | Compute | 16 vCPUs, 2048 CPU shares, 32 GiB RAM |
 | OS disk | 50 GiB QCOW2, EFI plus ext4 `/` |
-| Data disk | 250 GiB QCOW2, XFS `/var/lib/embedded-cluster` |
+| Data disk | 250 GiB, XFS `/var/lib/embedded-cluster` |
 | Guest user | `chef` |
-| SSH key | Host `~/.ssh/fury_rsa.pub` in guest `authorized_keys` |
+| SSH key | Host `~/.ssh/mbomba_firefly.pub` in guest `authorized_keys` |
+| Provisioning source | `existing` (VM built outside this workflow) |
 
-The two virtual disks use explicit serials, `CHEF360_OS` and `CHEF360_DATA`, so
-autoinstall does not depend on `/dev/vdX` discovery order. The XFS filesystem is
-verified to have `ftype=1`. Swap is not created and any swap entries are disabled.
+Two deployment variants are supported:
+
+- **`os_iso`** fresh builds: the two virtual disks use explicit serials,
+  `CHEF360_OS` and `CHEF360_DATA`, so autoinstall does not depend on `/dev/vdX`
+  discovery order, and the XFS filesystem is verified to have `ftype=1`. Swap is
+  not created and any swap entries are disabled.
+- **`existing`** builds: the VM already exists in libvirt; disks may have been
+  created manually with no serials and arbitrary filenames, but the same
+  host-level guarantees (XFS `ftype=1`, swap off, correct CPU shares, live disk
+  paths) are enforced.
 
 ## Workflow Boundaries
 
@@ -33,8 +41,8 @@ the host, libvirt, or guest. Mutating entry points require `--execute`.
 
 ### Prepare the KVM host and assets
 
-Run these once on the libvirt host to automate what was previously manual
-staging. Each mutating script prints a plan unless `--execute` is passed.
+Run these once on the libvirt host. Each mutating script prints a plan
+unless `--execute` is passed.
 
 ```bash
 scripts/kvm/bootstrap-kvm-host.sh --execute
@@ -45,14 +53,14 @@ AUTH_TOKEN='<authorization-code>' scripts/kvm/acquire-chef360-assets.sh --execut
 
 - `bootstrap-kvm-host.sh` installs the libvirt/QEMU tooling (including
   `genisoimage` and `xorriso`), enables `libvirtd`, starts/autostarts the
-  `default` network, creates the `/install/ubuntu` and `/install/chef-360/1.7`
-  staging directories, and generates `~/.ssh/fury_rsa` when absent.
+  `default` network, creates the staging directories, and generates
+  `~/.ssh/fury_rsa` when absent.
 - `fetch-ubuntu-iso.sh` downloads `ubuntu-24.04.4-live-server-amd64.iso` from
   `releases.ubuntu.com` and installs it only after its SHA-256 matches the
   published `SHA256SUMS`. Override with `UBUNTU_RELEASE` / `ISO_NAME`.
 - `issue-chef360-certs.sh` issues the root CA, issuing CA, and leaf certificate
   into `~/certs` for `{VM_HOSTNAME}` / `{VM_IP}`. The CA signing keys stay under
-  `.kvm/40_chef360/ca/` (mode 0700) and are never copied to the guest.
+  `.kvm/<VM_NAME>/ca/` (mode 0700) and are never copied to the guest.
 - `acquire-chef360-assets.sh` downloads the `chef-360` installer and
   `license.yaml` from the Chef 360 distribution endpoint (online by default,
   `--airgap` for the full bundle), verifies the 1.7.3 version, and stages both
@@ -72,14 +80,41 @@ Host, certificate, and asset syntax checks run in CI via
 ### Prepare reviewed inputs
 
 ```bash
-scripts/kvm/generate-ubuntu-autoinstall.sh
+scripts/kvm/create-chef360-plan.sh --interactive --execute   # approved plan
 scripts/kvm/generate-chef360-config.sh
 scripts/kvm/prepare-chef360-install-inputs.sh
 ```
 
-Generated runtime state is stored under `.kvm/40_chef360/` and excluded from
+Generated runtime state is stored under `.kvm/<VM_NAME>/` and excluded from
 Git. It contains password hashes, a generated API token, the license, the
 ConfigValues file, and a private TLS key. Keep the directory owner-readable.
+See `docs/kvm-chef360-project-plan.md` for the full plan parameter reference,
+including the `existing` provisioning source. Use `--interactive --execute`
+(not bare `--execute`) when the plan must not fall back to stale state
+defaults.
+
+### Onboarding an already-built VM (`existing`)
+
+When the VM was created outside this workflow (for example manually in
+Virtual Machine Manager), run the plan generator with `existing`:
+
+```bash
+scripts/kvm/create-chef360-plan.sh --interactive --execute   # pick: existing
+```
+
+The generator records the live libvirt facts (`VM_MAC`, `OS_DISK`,
+`DATA_DISK`) so validators check the actual domain, and the checkpoint skips
+autoinstall/VM creation and waits only for SSH. Before or after the plan, bring
+the guest to the same guarantees a fresh build provides:
+
+- Set CPU shares to the plan value persistently:
+  `virsh schedinfo <VM_NAME> --config --set cpu_shares=2048` (the live-only
+  change does not appear in `virsh dumpxml`).
+- Ensure swap is off (`/proc/swaps` empty, no swap in `/etc/fstab`).
+- Make sure `/var/lib/embedded-cluster` is XFS with `ftype=1`. Manually:
+  `sgdisk --new=1:0:0 --typecode=1:8300`, `mkfs.xfs -f -L chef360-data
+  -n ftype=1`, mount by UUID in fstab (the data disk usually has no serial).
+- Authorize the host SSH key and confirm passwordless sudo for the guest user.
 
 ### Provision to the pre-Chef checkpoint
 
@@ -91,11 +126,13 @@ The checkpoint workflow:
 
 1. Configures the Mint host's marked `/etc/hosts` and SSH config blocks.
 2. Installs the issuing and root CA certificates in the host trust store.
-3. Generates the Ubuntu NoCloud seed, Chef 360 ConfigValues, and staged inputs.
-4. Creates the VM and waits for Ubuntu autoinstall to power off.
+3. Generates the Chef 360 ConfigValues and staged inputs.
+4. Creates the VM and waits for Ubuntu autoinstall to power off *(skipped for
+   `existing`; an already-built VM already powers itself)*.
 5. Removes direct installer kernel/initrd and all optical media from the
-   persistent VM definition.
-6. Starts the installed OS and waits for first-boot cloud-init.
+   persistent VM definition *(skipped for `existing`)*.
+6. Starts the installed OS and waits for first-boot cloud-init *(skipped for
+   `existing`; waits only for SSH instead)*.
 7. Validates SSH, sudo, hostname, networking, swap, XFS, and lab name resolution.
 8. Copies Chef 360 inputs to `/opt/chef360` and installs guest CA trust.
 9. Stops before running `chef-360 install`.
@@ -103,7 +140,7 @@ The checkpoint workflow:
 Review the VM at this point:
 
 ```bash
-ssh chef360-2
+ssh chef360
 scripts/kvm/status-chef360-vm.sh
 scripts/kvm/validate-chef360-vm.sh
 ```
@@ -321,5 +358,30 @@ Destructive cleanup requires confirmation:
 scripts/kvm/destroy-chef360-vm.sh
 ```
 
-It deletes only the exact `40_chef360` definition, dedicated disks, generated
-installer artifacts, and `.kvm/40_chef360` runtime directory.
+It deletes only the exact `<VM_NAME>` definition, dedicated disks, generated
+installer artifacts, and `.kvm/<VM_NAME>` runtime directory. For an `existing`
+plan, confirm first that the disks removed are indeed only that VM's.
+
+## Deployment observations
+
+- **Waiting for pod readiness**: the validators treat `Running` and
+  `Completed` as healthy. `kubectl get pods | grep -cv Running` counts cleanly
+  finished install jobs as "not running" and can look stuck; compare against
+  the actual status column instead.
+- **Endpoint status codes**: the Admin Console answers HTTP `200` and the Chef
+  360 gateway answers HTTP `301` on its root path; both are healthy. Do not
+  treat the `301` as an error.
+- **Mailpit**: the API at `http://chef360.demo.lab:31101/api/v1/messages`
+  returns JSON with a `total` and `messages[]`. Polling for a new message
+  `ID` (vs. an existing one) is how the validator waits for the admin
+  activation email. Activation sends "Set Password" and "You are added to an
+  organization: lab"; setting the password later also sends a "Reset
+  password" message from `progress@platformtest.com`.
+- **OOM recovery warning**: deployment validation reports
+  `WARN: N container(s) recovered from an earlier OOM kill` when a pod the
+  installer restarted is now Running. Monitor for recurrence; it is not a
+  current failure.
+- **Workstation CLIs**: seven CLIs (`chef-platform-auth-cli`,
+  `chef-node-enrollment-cli`, `chef-import-cli`, `chef-node-management-cli`,
+  `chef-courier-cli`, `chef-dsm-cli`, `chef-habitat-cli`) are downloaded from
+  the bundled-tools endpoint and verified at `/opt/chef-360` on the guest.

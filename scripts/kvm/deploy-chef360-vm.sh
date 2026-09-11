@@ -36,7 +36,14 @@ done
 for command in virsh virt-install qemu-img; do
   require_command "${command}"
 done
-require_file "${UBUNTU_ISO}"
+if [[ "${PROVISION_METHOD}" == "existing" ]]; then
+  fail "PROVISION_METHOD is 'existing': the VM is already built. deploy-chef360-vm.sh must not run."
+fi
+if [[ "${PROVISION_METHOD}" == "os_iso" ]]; then
+  require_file "${UBUNTU_ISO}"
+else
+  require_file "${CHEF360_CLONE_SOURCE}"
+fi
 require_file "${SSH_PUBLIC_KEY}"
 
 "${SCRIPT_DIR}/check-libvirt-dns.sh"
@@ -61,6 +68,8 @@ if ping -c 1 -W 1 "${VM_IP}" >/dev/null 2>&1; then
   fail "IP address responds to ping: ${VM_IP}"
 fi
 
+resolve_vm_mac
+
 cat <<EOF
 Chef 360 KVM deployment plan
   VM:               ${VM_NAME}
@@ -70,25 +79,36 @@ Chef 360 KVM deployment plan
   Compute:          ${VM_VCPUS} vCPUs, ${VM_CPU_SHARES} CPU shares, ${VM_MEMORY_MIB} MiB RAM
   OS disk:          ${OS_DISK} (${VM_OS_DISK_GIB} GiB qcow2, ${VM_DISK_PREALLOCATION}, serial ${VM_OS_DISK_SERIAL})
   Data disk:        ${DATA_DISK} (${VM_DATA_DISK_GIB} GiB qcow2, ${VM_DISK_PREALLOCATION}, serial ${VM_DATA_DISK_SERIAL})
+  Provisioning:     ${PROVISION_METHOD}
+  SSH public key:   ${SSH_PUBLIC_KEY}
+EOF
+if [[ "${PROVISION_METHOD}" == "os_iso" ]]; then
+  cat <<EOF
   Ubuntu ISO:       ${UBUNTU_ISO}
   NoCloud seed ISO: ${SEED_ISO}
   Install kernel:   ${INSTALL_KERNEL}
   Install initrd:   ${INSTALL_INITRD}
   Libvirt seed:     ${LIBVIRT_SEED_ISO}
-  SSH public key:   ${SSH_PUBLIC_KEY}
 EOF
+else
+  cat <<EOF
+  Clone source:     ${CHEF360_CLONE_SOURCE}
+EOF
+fi
 
 if [[ "${EXECUTE}" != true ]]; then
   printf '\nDry run only. No disks or VM were created. Use --execute after reviewing Item 2.\n'
   exit 0
 fi
 
-require_file "${SEED_ISO}"
-require_file "${INSTALL_KERNEL}"
-require_file "${INSTALL_INITRD}"
-for artifact in "${LIBVIRT_SEED_ISO}" "${LIBVIRT_INSTALL_KERNEL}" "${LIBVIRT_INSTALL_INITRD}"; do
-  [[ ! -e "${artifact}" ]] || fail "Libvirt install artifact already exists: ${artifact}"
-done
+if [[ "${PROVISION_METHOD}" == "os_iso" ]]; then
+  require_file "${SEED_ISO}"
+  require_file "${INSTALL_KERNEL}"
+  require_file "${INSTALL_INITRD}"
+  for artifact in "${LIBVIRT_SEED_ISO}" "${LIBVIRT_INSTALL_KERNEL}" "${LIBVIRT_INSTALL_INITRD}"; do
+    [[ ! -e "${artifact}" ]] || fail "Libvirt install artifact already exists: ${artifact}"
+  done
+fi
 save_kvm_state
 
 created_os=false
@@ -109,6 +129,44 @@ cleanup_failed_deploy() {
   fi
 }
 trap cleanup_failed_deploy EXIT
+
+if [[ "${PROVISION_METHOD}" == "clone" ]]; then
+  log_step "Cloning source image to OS disk"
+  sudo cp --reflink=auto "${CHEF360_CLONE_SOURCE}" "${OS_DISK}"
+  created_os=true
+  log_step "Creating preallocated Chef 360 data disk"
+  sudo qemu-img create -f qcow2 -o "preallocation=${VM_DISK_PREALLOCATION}" "${DATA_DISK}" "${VM_DATA_DISK_GIB}G"
+  created_data=true
+
+  log_step "Launching ${VM_NAME} from cloned image"
+  sudo virt-install \
+    --connect "${LIBVIRT_URI}" \
+    --name "${VM_NAME}" \
+    --memory "${VM_MEMORY_MIB}" \
+    --vcpus "${VM_VCPUS}" \
+    --cpu host-passthrough \
+    --cputune "shares=${VM_CPU_SHARES}" \
+    --machine q35 \
+    --boot uefi \
+    --os-variant ubuntu24.04 \
+    --disk "path=${OS_DISK},format=qcow2,bus=virtio,cache=none,io=native,discard=unmap,serial=${VM_OS_DISK_SERIAL}" \
+    --disk "path=${DATA_DISK},format=qcow2,bus=virtio,cache=none,io=native,discard=unmap,serial=${VM_DATA_DISK_SERIAL}" \
+    --network "network=${VM_NETWORK},model=virtio,mac=${VM_MAC}" \
+    --graphics spice \
+    --video qxl \
+    --channel unix,target.type=virtio,target.name=org.qemu.guest_agent.0 \
+    --rng /dev/urandom \
+    --noautoconsole
+
+  trap - EXIT
+  log_step "VM created from clone source ${CHEF360_CLONE_SOURCE}"
+  cat <<EOF
+
+Next step for clone builds (the data disk is attached but unformatted):
+  ${SCRIPT_DIR}/provision-chef360-data-disk.sh --execute
+EOF
+  exit 0
+fi
 
 log_step "Creating preallocated OS disk"
 sudo qemu-img create -f qcow2 -o "preallocation=${VM_DISK_PREALLOCATION}" "${OS_DISK}" "${VM_OS_DISK_GIB}G"

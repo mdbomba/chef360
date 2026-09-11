@@ -7,7 +7,7 @@ source "${SCRIPT_DIR}/lib-chef360-kvm.sh"
 
 EXECUTE=false
 FORCE=false
-CA_DIR="${KVM_CA_DIR:-${KVM_WORK_DIR}/ca}"
+CA_DIR="${KVM_CA_DIR:-${KVM_WORK_DIR}/${VM_NAME}-ca}"
 ROOT_DAYS="${ROOT_DAYS:-3650}"
 ISSUING_DAYS="${ISSUING_DAYS:-1825}"
 LEAF_DAYS="${LEAF_DAYS:-825}"
@@ -15,11 +15,11 @@ ROOT_SUBJECT="${ROOT_SUBJECT:-/O=Chef 360 Lab/CN=Chef 360 Demo Root CA}"
 ISSUING_SUBJECT="${ISSUING_SUBJECT:-/O=Chef 360 Lab/CN=Chef 360 Demo Issuing CA}"
 LEAF_SUBJECT="${LEAF_SUBJECT:-/O=Chef 360 Lab/CN=${VM_HOSTNAME}}"
 
-ROOT_KEY="${CA_DIR}/chef360-2_rca.key"
-ROOT_CRT="${CA_DIR}/chef360-2_rca.crt"
-ISSUING_KEY="${CA_DIR}/chef360-2_ica.key"
-ISSUING_CRT="${CA_DIR}/chef360-2_ica.crt"
-LEAF_CSR="${CA_DIR}/chef360-2.csr"
+ROOT_KEY="${CA_DIR}/${VM_NAME}-rca.key"
+ROOT_CRT="${CA_DIR}/${VM_NAME}-rca.crt"
+ISSUING_KEY="${CA_DIR}/${VM_NAME}-ica.key"
+ISSUING_CRT="${CA_DIR}/${VM_NAME}-ica.crt"
+LEAF_CSR="${CA_DIR}/${VM_NAME}.csr"
 
 usage() {
   cat <<EOF
@@ -87,12 +87,12 @@ root_issuer="$(openssl x509 -in "${ROOT_CRT}" -noout -issuer | sed 's/^issuer=//
 if [[ ! -f "${ISSUING_KEY}" ]] || [[ ! -f "${ISSUING_CRT}" ]]; then
   log_step "Generating issuing certificate authority"
   openssl genrsa 4096 >"${ISSUING_KEY}"
-  openssl req -new -key "${ISSUING_KEY}" -subj "${ISSUING_SUBJECT}" -out "${CA_DIR}/issuing.csr"
-  openssl x509 -req -in "${CA_DIR}/issuing.csr" -CA "${ROOT_CRT}" -CAkey "${ROOT_KEY}" \
+  openssl req -new -key "${ISSUING_KEY}" -subj "${ISSUING_SUBJECT}" -out "${CA_DIR}/${VM_NAME}-issuing.csr"
+  openssl x509 -req -in "${CA_DIR}/${VM_NAME}-issuing.csr" -CA "${ROOT_CRT}" -CAkey "${ROOT_KEY}" \
     -days "${ISSUING_DAYS}" -sha256 -set_serial "0x$(openssl rand -hex 16)" \
     -extfile <(printf '%s\n' 'basicConstraints=critical,CA:TRUE,pathlen:0' 'keyUsage=critical,keyCertSign,cRLSign') \
     -out "${ISSUING_CRT}"
-  rm -f -- "${CA_DIR}/issuing.csr"
+  rm -f -- "${CA_DIR}/${VM_NAME}-issuing.csr"
   chmod 0600 "${ISSUING_KEY}"
   chmod 0644 "${ISSUING_CRT}"
 fi

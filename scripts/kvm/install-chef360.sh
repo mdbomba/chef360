@@ -95,10 +95,12 @@ target="${VM_USER}@${VM_IP}"
 actual_hostname="$(ssh "${ssh_args[@]}" "${target}" hostname -f)"
 [[ "${actual_hostname}" == "${VM_HOSTNAME}" ]] || fail "Refusing unexpected target hostname: ${actual_hostname}"
 ssh "${ssh_args[@]}" "${target}" sudo -n true >/dev/null || fail "Passwordless sudo is unavailable"
-ssh "${ssh_args[@]}" "${target}" test -f /var/lib/chef360-autoinstall-ready || fail "Autoinstall readiness marker is missing"
+[[ "${PROVISION_METHOD}" == "existing" ]] || \
+  ssh "${ssh_args[@]}" "${target}" test -f /var/lib/chef360-autoinstall-ready \
+    || fail "Autoinstall readiness marker is missing"
 ssh "${ssh_args[@]}" "${target}" test -f /var/lib/chef360-install-inputs-ready || fail "Installation-input readiness marker is missing"
 
-ssh "${ssh_args[@]}" "${target}" sudo -n sh -eu <<'REMOTE_CHECKS'
+ssh "${ssh_args[@]}" "${target}" sudo -n env VM_HOSTNAME="${VM_HOSTNAME}" sh -eu <<'REMOTE_CHECKS'
 test -x /opt/chef360/chef-360
 test -r /opt/chef360/license.yaml
 test -r /opt/chef360/chef-config.yaml
@@ -110,7 +112,7 @@ findmnt -n -o FSTYPE /var/lib/embedded-cluster | grep -qx xfs
 xfs_info /var/lib/embedded-cluster | grep -q 'ftype=1'
 test "$(swapon --noheadings 2>/dev/null | wc -l)" -eq 0
 openssl verify -CAfile /etc/ssl/certs/ca-certificates.crt /opt/chef360/tls/chef360-2.crt
-openssl verify -verify_hostname chef360-2.demo.lab -CAfile /etc/ssl/certs/ca-certificates.crt /opt/chef360/tls/chef360-2.crt
+openssl verify -verify_hostname "$VM_HOSTNAME" -CAfile /etc/ssl/certs/ca-certificates.crt /opt/chef360/tls/chef360-2.crt
 REMOTE_CHECKS
 
 if ssh "${ssh_args[@]}" "${target}" 'ss -ltn 2>/dev/null | grep -q ":31000 "'; then
@@ -126,7 +128,7 @@ printf '%s' "${ADMIN_CONSOLE_PASSWORD}" | \
     "sudo -n sh -c 'umask 077; cat > /run/chef360-admin-console-password'"
 
 ssh "${ssh_args[@]}" "${target}" \
-  sudo -n env CHEF360_IGNORE_APP_PREFLIGHTS="${ignore_preflights_raw}" bash -euo pipefail <<'REMOTE_INSTALL'
+  sudo -n env CHEF360_IGNORE_APP_PREFLIGHTS="${ignore_preflights_raw}" VM_HOSTNAME="${VM_HOSTNAME}" bash -euo pipefail <<'REMOTE_INSTALL'
 umask 077
 ignore_app_preflights=""
 [[ "${CHEF360_IGNORE_APP_PREFLIGHTS:-}" =~ ^(1|true|yes)$ ]] && ignore_app_preflights=--ignore-app-preflights
@@ -136,7 +138,7 @@ test -s "$password_file"
 admin_console_password="$(cat "$password_file")"
 /opt/chef360/chef-360 install \
   --license /opt/chef360/license.yaml \
-  --hostname chef360-2.demo.lab \
+  --hostname "$VM_HOSTNAME" \
   --tls-cert /opt/chef360/tls/chef360-2.crt \
   --tls-key /opt/chef360/tls/chef360-2.key \
   --config-values /opt/chef360/chef-config.yaml \

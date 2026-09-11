@@ -6,8 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib-chef360-kvm.sh"
 
 VM_INITIAL_PASSWORD="${VM_INITIAL_PASSWORD:-devsecops}"
-USER_DATA="${KVM_WORK_DIR}/user-data"
-META_DATA="${KVM_WORK_DIR}/meta-data"
+USER_DATA="${KVM_WORK_DIR}/${VM_NAME}-user-data"
+META_DATA="${KVM_WORK_DIR}/${VM_NAME}-meta-data"
 
 for command in openssl genisoimage xorriso python3; do
   require_command "${command}"
@@ -18,6 +18,8 @@ require_file "${SSH_PUBLIC_KEY}"
 install -d -m 0700 "${KVM_WORK_DIR}"
 password_hash="$(openssl passwd -6 "${VM_INITIAL_PASSWORD}")"
 ssh_key="$(<"${SSH_PUBLIC_KEY}")"
+
+resolve_vm_mac
 
 cat >"${USER_DATA}" <<EOF
 #cloud-config
@@ -34,8 +36,8 @@ autoinstall:
   apt:
     geoip: false
     mirror-selection:
-      primary:
-        - uri: http://archive.ubuntu.com/ubuntu
+primary:
+            - uri: ${UBUNTU_MIRROR}
           arches: [amd64]
     fallback: abort
   identity:

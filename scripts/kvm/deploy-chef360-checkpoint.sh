@@ -13,8 +13,8 @@ elif [[ $# -gt 0 ]]; then
 fi
 
 cat <<EOF
-Chef 360 checkpoint deployment (steps 1-9)
-  1. Configure Mint hosts, CA trust, and SSH alias
+Chef 360 deployment (steps 1-9)
+  1. Verify host has resources, KVM, dnsmasq, and hosts file entries
   2. Generate Ubuntu autoinstall artifacts
   3. Generate Chef 360 ConfigValues
   4. Prepare local installation staging
@@ -27,6 +27,15 @@ Chef 360 checkpoint deployment (steps 1-9)
 STOP: Chef 360 will not be installed.
 EOF
 
+if [[ "${PROVISION_METHOD}" == "existing" ]]; then
+  cat <<EOF
+
+PROVISION_METHOD is 'existing': steps 2/5/6 are skipped because the VM is
+already built and running (${VM_NAME} at ${VM_IP}). The deployment covers
+config generation, validation, staging, and the VM tests only.
+EOF
+fi
+
 if [[ "${EXECUTE}" != true ]]; then
   printf '\nDry run only. Use --execute to run through the review checkpoint.\n'
   exit 0
@@ -34,26 +43,36 @@ fi
 
 "${SCRIPT_DIR}/configure-chef360-workstation.sh" --execute
 "${SCRIPT_DIR}/check-libvirt-dns.sh"
-"${SCRIPT_DIR}/generate-ubuntu-autoinstall.sh"
+if [[ "${PROVISION_METHOD}" == "existing" ]]; then
+  log_step "Existing VM detected; skipping autoinstall artifacts, deploy, and boot finalize"
+else
+  "${SCRIPT_DIR}/generate-ubuntu-autoinstall.sh"
+  "${SCRIPT_DIR}/deploy-chef360-vm.sh" --execute --wait
+  "${SCRIPT_DIR}/finalize-chef360-vm-boot.sh"
+  virsh_system start "${VM_NAME}" >/dev/null
+fi
 "${SCRIPT_DIR}/generate-chef360-config.sh"
 "${SCRIPT_DIR}/prepare-chef360-install-inputs.sh"
-"${SCRIPT_DIR}/deploy-chef360-vm.sh" --execute --wait
-"${SCRIPT_DIR}/finalize-chef360-vm-boot.sh"
-virsh_system start "${VM_NAME}" >/dev/null
-
-log_step "Waiting for SSH and Ubuntu readiness marker"
+log_step "Waiting for SSH"
 ready=false
 for attempt in $(seq 1 120); do
   if ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new \
     -i "${SSH_PRIVATE_KEY}" "${VM_USER}@${VM_IP}" \
-    'test -f /var/lib/chef360-autoinstall-ready && systemctl is-active --quiet ssh' >/dev/null 2>&1; then
+    'systemctl is-active --quiet ssh' >/dev/null 2>&1; then
     ready=true
     break
   fi
-  printf 'WAIT: Ubuntu first boot is not ready (%d/120)\n' "${attempt}"
+  printf 'WAIT: SSH is not ready (%d/120)\n' "${attempt}"
   sleep 10
 done
-[[ "${ready}" == true ]] || fail "Timed out waiting for Ubuntu first boot"
+[[ "${ready}" == true ]] || fail "Timed out waiting for SSH"
+if [[ "${PROVISION_METHOD}" == "existing" ]]; then
+  log_step "Existing VM detected; skipping autoinstall readiness marker check"
+else
+  ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -i "${SSH_PRIVATE_KEY}" \
+    "${VM_USER}@${VM_IP}" 'test -f /var/lib/chef360-autoinstall-ready' \
+    || fail "Autoinstall readiness marker missing (fresh install requires it)"
+fi
 
 "${SCRIPT_DIR}/validate-chef360-vm.sh"
 "${SCRIPT_DIR}/stage-chef360-install-inputs.sh" --execute
