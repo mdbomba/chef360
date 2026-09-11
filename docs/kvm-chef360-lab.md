@@ -60,6 +60,12 @@ AUTH_TOKEN='<authorization-code>' scripts/kvm/acquire-chef360-assets.sh --execut
   through `AUTH_TOKEN` (or `--auth-token`) so it is never placed in curl's
   arguments.
 
+When `KVM_SOURCE_DIR` points at a maintained cache such as `~/repos/sources`
+(containing `chef360/chef-360`, `chef360/license.yaml`, `chef360/tls/*`, and
+`ubuntu/<iso>`), the scripts prefer the cached artifacts over the `/install`
+defaults. Explicit environment values always win, and the selected paths are
+persisted to the generated state file.
+
 Host, certificate, and asset syntax checks run in CI via
 `bash scripts/ci/check-kvm-scripts.sh`.
 
