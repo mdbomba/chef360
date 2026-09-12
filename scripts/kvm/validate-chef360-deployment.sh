@@ -301,4 +301,38 @@ if ((FAILURES > 0)); then
   printf '\nChef 360 deployment validation failed with %d issue(s).\n' "${FAILURES}" >&2
   exit 1
 fi
+
+# Chef 360 deployment validation passed.
 printf '\nChef 360 deployment validation passed.\n'
+
+# "The job is not done until the tools are put away." The deployment is fully
+# validated end to end (the administrator activation email was delivered to
+# Mailpit), so the per-build working files are no longer needed. Offer the
+# operator a chance to put them away; this is a prompt, never an automatic
+# delete.
+#
+# What is removed on confirmation:
+#   - ${KVM_WORK_DIR}    (${PROJECT_ROOT}/.kvm/${VM_NAME})  build work dir
+#   - ${KVM_STATE_FILE}  (${PROJECT_ROOT}/config/kvm-chef360.env)  state file
+#
+# What is kept: the VM, its OS/data disks, the guest, and the per-build TLS
+# material under ~/certs. The disks live in the libvirt image directory, not
+# in the work dir, so a later destroy-chef360-vm.sh or validate re-run still
+# has what it needs.
+if [[ "${EXECUTE}" == true && -t 0 ]]; then
+  printf '\nChef 360 build working files for %s:\n' "${VM_NAME}"
+  printf '  Work dir:   %s\n' "${KVM_WORK_DIR}"
+  printf '  State file: %s\n' "${KVM_STATE_FILE}"
+  printf 'The VM, its disks, and ~/certs material are kept.\n'
+  read -r -p 'Remove the Chef 360 build working files now? [y/N] ' cleanup_confirm || true
+  if [[ "${cleanup_confirm}" =~ ^[yY](es)?$ ]]; then
+    # Safety: only ever remove paths this project owns inside the project tree.
+    [[ "${KVM_WORK_DIR}" == "${PROJECT_ROOT}"/.kvm/* ]] || fail "Refusing unsafe work directory: ${KVM_WORK_DIR}"
+    [[ "${KVM_STATE_FILE}" == "${PROJECT_ROOT}"/config/* ]] || fail "Refusing unsafe state file: ${KVM_STATE_FILE}"
+    rm -rf -- "${KVM_WORK_DIR}"
+    rm -f -- "${KVM_STATE_FILE}"
+    printf 'Removed Chef 360 build working files for %s.\n' "${VM_NAME}"
+  else
+    printf 'Working files retained.\n'
+  fi
+fi
