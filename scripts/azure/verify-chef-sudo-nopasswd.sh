@@ -18,7 +18,7 @@ ENSURE_SSH_ACCESS_SCRIPT="${SCRIPT_DIR}/ensure-azure-ssh-access.sh"
 
 SSH_OPTIONS=(
   -o BatchMode=yes
-  -o StrictHostKeyChecking=accept-new
+  -o StrictHostKeyChecking=yes
   -o ConnectTimeout=10
 )
 
@@ -47,14 +47,10 @@ verify_node_sudo_nopasswd() {
 seed_host_key_if_missing() {
   local node="$1"
 
-  mkdir -p "$(dirname "${KNOWN_HOSTS_FILE}")"
-  touch "${KNOWN_HOSTS_FILE}"
-
-  if ssh-keygen -F "${node}" -f "${KNOWN_HOSTS_FILE}" >/dev/null 2>&1; then
-    return
-  fi
-
-  ssh-keyscan -H -T 5 "${node}" >> "${KNOWN_HOSTS_FILE}" 2>/dev/null || true
+  ssh-keygen -F "${node}" -f "${KNOWN_HOSTS_FILE}" >/dev/null 2>&1 || {
+    printf 'No trusted SSH host key exists for %s in %s. Add a verified key before continuing.\n' "${node}" "${KNOWN_HOSTS_FILE}" >&2
+    exit 1
+  }
 }
 
 if [[ -z "${SSH_PRIVATE_KEY}" ]]; then
@@ -66,6 +62,8 @@ if [[ ! -f "${SSH_PRIVATE_KEY}" ]]; then
   printf "SSH private key not found: %s\n" "${SSH_PRIVATE_KEY}"
   exit 1
 fi
+
+validate_linux_username "${CHEF_NODE_USER}"
 
 bash "${ENSURE_SSH_ACCESS_SCRIPT}" "${RESOURCE_GROUP:-rg-chef360-linux}" "${NAME_PREFIX:-${OBJECT_OWNER_PREFIX:-chef360}-sa-linux}" "${SSH_SOURCE_CIDR_OVERRIDE}" >/dev/null
 

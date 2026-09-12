@@ -29,6 +29,7 @@ REGISTER_CHEF360_SCRIPT="${SCRIPT_DIR}/register-chef360-nodes.sh"
 VERIFY_CHEF_SUDO_SCRIPT="${SCRIPT_DIR}/verify-chef-sudo-nopasswd.sh"
 ENSURE_SSH_ACCESS_SCRIPT="${SCRIPT_DIR}/ensure-azure-ssh-access.sh"
 CHEF_NODE_USER="${CHEF_NODE_USER:-chef}"
+validate_linux_username "${CHEF_NODE_USER}"
 CHEF_POLICY_NAME="${CHEF_POLICY_NAME:-stig_base}"
 CHEF_POLICY_GROUP="${CHEF_POLICY_GROUP:-dev}"
 ENABLE_CHEF360_REGISTRATION="${ENABLE_CHEF360_REGISTRATION:-true}"
@@ -257,7 +258,7 @@ wait_for_node_readiness() {
 
   for ((attempt=1; attempt<=max_attempts; attempt++)); do
     log_step "Waiting for cloud-init on ${node_ip} (attempt ${attempt}/${max_attempts})"
-    if ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_ip}" \
+    if ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_ip}" \
       "cloud-init status --wait >/dev/null && test -f /var/lib/chef360-template-ready"; then
       return
     fi
@@ -273,7 +274,7 @@ verify_node_prerequisites() {
   local expected_key
 
   expected_key="$(ssh-keygen -y -f "${SSH_PRIVATE_KEY}" | awk '{print $1 " " $2}')"
-  ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_ip}" \
+  ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_ip}" \
     "set -euo pipefail; test \"\$(id -un)\" = '${CHEF_NODE_USER}'; command -v sshd >/dev/null; systemctl is-enabled ssh >/dev/null; systemctl is-active ssh >/dev/null; sudo test \"\$(stat -c '%U:%G:%a' /etc/sudoers.d/chef)\" = 'root:root:440'; sudo test \"\$(cat /etc/sudoers.d/chef)\" = '${CHEF_NODE_USER} ALL=(ALL) NOPASSWD:ALL'; awk '{print \$1 \" \" \$2}' \"\${HOME}/.ssh/authorized_keys\" | grep -Fqx '${expected_key}'"
 }
 
@@ -301,7 +302,7 @@ check_and_fix_windows_hosts() {
     exit 1
   fi
   for node in node1 node2; do
-    ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node}" true
+    ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node}" true
   done
   log_step "Windows hosts entries updated and verified"
 }
@@ -401,7 +402,7 @@ validate_bootstrap_policy() {
 run_chef_client_on_nodes() {
   log_step "Step 9: Running sudo chef-client on each node"
   for node in node1 node2; do
-    ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node}" "sudo -n chef-client"
+    ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node}" "sudo -n chef-client"
   done
 }
 

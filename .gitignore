@@ -20,6 +20,7 @@ infra/azure/azure-two-linux-lowcost.parameters.json
 /chef-360.airgap
 /chef-360-*.tgz
 /license.yaml
+/.chef360-install/
 
 # Generated Chef 360 request/response files
 defined-skills.in

@@ -57,6 +57,7 @@ if (Test-Path -LiteralPath $StateFile -PathType Leaf) {
 if ($ResourceGroup -eq 'rg-chef360-linux' -and $state.ContainsKey('RESOURCE_GROUP')) { $ResourceGroup = $state['RESOURCE_GROUP'] }
 if ($VmSize -eq 'Standard_D2s_v5' -and $state.ContainsKey('VM_SIZE')) { $VmSize = $state['VM_SIZE'] }
 if ($ChefNodeUser -eq 'chef' -and $state.ContainsKey('CHEF_NODE_USER')) { $ChefNodeUser = $state['CHEF_NODE_USER'] }
+if ($ChefNodeUser -notmatch '^[a-z_][a-z0-9_-]*\$?$') { throw "Invalid Linux username: $ChefNodeUser" }
 if ($ChefPolicyName -eq 'stig_base' -and $state.ContainsKey('CHEF_POLICY_NAME')) { $ChefPolicyName = $state['CHEF_POLICY_NAME'] }
 if ($ChefPolicyGroup -eq 'dev' -and $state.ContainsKey('CHEF_POLICY_GROUP')) { $ChefPolicyGroup = $state['CHEF_POLICY_GROUP'] }
 if ([string]::IsNullOrWhiteSpace($NamePrefix) -and $state.ContainsKey('NAME_PREFIX')) { $NamePrefix = $state['NAME_PREFIX'] }
@@ -291,7 +292,7 @@ function Ensure-SudoNoPassword {
 function Test-SudoNoPassword {
   param([string]$Target)
 
-  $sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
+  $sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
   Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@$Target", 'sudo -n true')) -ErrorMessage "Passwordless sudo check failed for $Target"
   $sudoList = Get-CheckedOutput -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@$Target", 'sudo -n -l')) -ErrorMessage "Unable to list sudo permissions on $Target"
   $sudoText = ($sudoList -join "`n")
@@ -303,7 +304,7 @@ function Test-SudoNoPassword {
 function Wait-NodeReady {
   param([string]$Target)
 
-  $sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
+  $sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
   for ($attempt = 1; $attempt -le 30; $attempt++) {
     Write-Step "Waiting for cloud-init on $Target (attempt $attempt/30)"
     & ssh @sshArgs "$ChefNodeUser@$Target" 'cloud-init status --wait >/dev/null && test -f /var/lib/chef360-template-ready' *> $null
@@ -326,7 +327,7 @@ function Test-NodePrerequisites {
   }
   $expectedKey = "$($keyParts[0]) $($keyParts[1])"
   $remoteCommand = 'set -euo pipefail; test "$(id -un)" = ''{0}''; command -v sshd >/dev/null; systemctl is-enabled ssh >/dev/null; systemctl is-active ssh >/dev/null; sudo test "$(stat -c ''%U:%G:%a'' /etc/sudoers.d/chef)" = ''root:root:440''; sudo test "$(cat /etc/sudoers.d/chef)" = ''{0} ALL=(ALL) NOPASSWD:ALL''; awk ''{{print $1 " " $2}}'' "$HOME/.ssh/authorized_keys" | grep -Fqx ''{1}''' -f $ChefNodeUser, $expectedKey
-  $sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
+  $sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
   Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@$Target", $remoteCommand)) -ErrorMessage "Node prerequisite validation failed for $Target"
 }
 
@@ -354,7 +355,7 @@ function Sync-WindowsHosts {
     throw 'WSL hostname resolution does not match the Windows hosts file'
   }
 
-  $sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
+  $sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
   Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@node1", 'true')) -ErrorMessage 'Alias SSH validation failed for node1'
   Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@node2", 'true')) -ErrorMessage 'Alias SSH validation failed for node2'
   Write-Step 'Windows hosts entries and WSL aliases validated'
@@ -517,7 +518,7 @@ foreach ($node in 'node1', 'node2') {
 }
 
 Write-Step 'Step 7: Running sudo chef-client on each node'
-$sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
+$sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
 Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@$($ips.Node1)", 'sudo -n chef-client')) -ErrorMessage 'chef-client failed on node1'
 Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@$($ips.Node2)", 'sudo -n chef-client')) -ErrorMessage 'chef-client failed on node2'
 

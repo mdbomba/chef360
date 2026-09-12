@@ -38,7 +38,7 @@ class ChefKnowledgeMcpTests(unittest.TestCase):
 
     def test_public_manifest_has_expected_documents(self) -> None:
         self.assertEqual("1.7.3", self.public_knowledge.manifest["version"])
-        self.assertEqual(27, len(self.public_knowledge.documents))
+        self.assertEqual(28, len(self.public_knowledge.documents))
         self.assertTrue(
             {
                 "chef-automate-overview",
@@ -49,6 +49,7 @@ class ChefKnowledgeMcpTests(unittest.TestCase):
                 "operations-infrastructure-automation",
                 "operations-kvm-lab-deployment",
                 "operations-quick-start-installation",
+                "operations-traditional-recovery-installation",
             }.issubset(document["id"] for document in self.public_knowledge.documents)
         )
 

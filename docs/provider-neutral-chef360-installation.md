@@ -4,19 +4,63 @@ This repository separates VM provisioning from Chef 360 installation. AWS,
 Azure, KVM, Hyper-V, and Proxmox implementations should all create a Linux guest
 that satisfies the same contract, then invoke the scripts in `scripts/chef360/`.
 
+## Choose an Installation Style
+
+Use the concise interactive entry point when a human is installing Chef 360 on
+a prepared Linux host:
+
+```bash
+scripts/chef360/start-install.sh
+```
+
+Choose **traditional** to download the authorized package and configure Chef
+360 through the Admin Console. Choose **recovery/repeatable** when a protected
+ConfigValues export from a working installation is available. The MCP can
+explain these choices, but remains read-only and does not run installation
+commands.
+
 ## Inputs
 
 Prepare these files on the target guest:
 
 - The Chef 360 installer matching the intended release.
 - A valid Chef 360 license.
-- A `ConfigValues` file generated for the same Chef 360 release.
+- An optional `ConfigValues` file generated for the same Chef 360 release.
 
 `knowledge-set/chef360-1.7.3/examples/kots-config.yaml` is an isolated-lab
 example exported from Chef 360 1.7.3. It contains environment-specific settings
 and must be reviewed before it is used in another environment.
 
-## Workflow
+## Traditional Installation
+
+The package contains the authorization-specific `license.yaml`; do not commit
+it or the downloaded installer. Edit the three obvious parameters near the top
+of `scripts/chef360/download-install-server.sh` when needed:
+
+```bash
+VERSION="1.7.3"
+AIRGAP=false
+CHECK_LATEST=true
+```
+
+The helper checks the public release notes and warns when the pinned version is
+not the latest documented release. It never changes the selected version
+automatically. It downloads and extracts only, leaving a review point before
+the installer changes the host. Set `AIRGAP=true` to obtain the air-gapped
+bundle.
+
+Optional local inputs make a traditional installation more complete:
+
+- A matching Admin Console TLS certificate and private key.
+- An Admin Console FQDN.
+- A 12-or-more-character `CHEF360_ADMIN_CONSOLE_PASSWORD`.
+
+Without ConfigValues, complete application configuration through the Admin
+Console. After a successful configuration, use the Admin Console **View files**
+menu to export `config.yaml`. Store that export, the entitlement-specific
+license, and private TLS material securely outside Git as a recovery package.
+
+## Recovery Or Repeatable Installation
 
 Run the preliminary check:
 
@@ -32,7 +76,12 @@ sudo --preserve-env=CHEF360_ADMIN_CONSOLE_PASSWORD \
   scripts/chef360/install-server.sh \
   --installer /path/to/chef-360 \
   --license /path/to/license.yaml \
-  --config-values /path/to/kots-config.yaml
+  --config-values /path/to/config.yaml \
+  --tls-cert /path/to/chef360.crt \
+  --tls-key /path/to/chef360.key \
+  --hostname chef360.example.test \
+  --ignore-host-preflights \
+  --ignore-app-preflights
 ```
 
 Validate the installation:
@@ -42,6 +91,17 @@ sudo scripts/chef360/validate-installation.sh \
   --admin-url https://chef360.example.test:30000 \
   --tenant-url https://tenant.example.test:31000
 ```
+
+`install-server.sh` is noninteractive by default. It requires a 12-or-more
+character password in `CHEF360_ADMIN_CONSOLE_PASSWORD` and fails rather than
+prompting when the value is absent or short. Add `--interactive` for private
+password/FQDN prompts and confirmation. ConfigValues and the TLS pair are each
+optional; a supplied certificate requires a supplied key and vice versa.
+
+The preflight bypasses are explicit because this lab has a reviewed
+private-address DNS warning that the vendor installer treats as blocking. Run
+`check-host-requirements.sh` unless there is a separately reviewed reason to
+use `--skip-host-check`.
 
 The endpoint checks allow self-signed TLS because new lab installations commonly
 use it. This does not change the application's TLS configuration.

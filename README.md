@@ -3,10 +3,12 @@
 This repository is the project of record for Chef 360 automation, versioned
 public knowledge, and MCP services.
 
-It helps people and AI clients find Chef 360 guidance, retrieve focused source
-material, install Chef 360 on a prepared Linux guest, and inspect an allowlisted
-local lab. The MCP services are read-only knowledge and inspection interfaces;
-they do not administer Chef 360, cloud accounts, or hypervisors.
+This repository has two purposes: help users install Chef 360 and help users
+understand how to operate Chef 360. It does that by helping people and AI
+clients find guidance, retrieve focused source material, install Chef 360 on a
+prepared Linux guest, and inspect an allowlisted local lab. The MCP services
+are read-only knowledge and inspection interfaces; they do not administer Chef
+360, cloud accounts, or hypervisors.
 
 ## Start Here
 
@@ -16,7 +18,7 @@ Choose the path that matches your goal:
 |---|---|
 | Ask a Chef 360 question | Connect the Python MCP using `config/chef-knowledge-mcp.example.json`, then ask normally. |
 | Understand available MCP sources | Call `get_chef_service_overview`; its default response is intentionally brief. |
-| Install Chef 360 on an existing Linux guest | Follow `docs/provider-neutral-chef360-installation.md`. |
+| Install Chef 360 on an existing Linux guest | Run `scripts/chef360/start-install.sh`, then follow `docs/provider-neutral-chef360-installation.md`. |
 | Build the reviewed KVM lab | Follow `docs/kvm-chef360-lab.md` and stop at its pre-Chef review checkpoint. |
 | Provision Azure infrastructure | Follow `docs/azure-two-linux-vms.md`. |
 | Study other infrastructure patterns | Review the imported Terraform references, noting their documented limitations. |
@@ -114,7 +116,8 @@ sudo --preserve-env=CHEF360_ADMIN_CONSOLE_PASSWORD \
   scripts/chef360/install-server.sh \
   --installer /path/to/chef-360 \
   --license /path/to/license.yaml \
-  --config-values knowledge-set/chef360-1.7.3/examples/kots-config.yaml
+  --config-values /protected/path/to/config.yaml \
+  --hostname chef360.example.com
 sudo scripts/chef360/validate-installation.sh
 ```
 

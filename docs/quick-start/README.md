@@ -64,7 +64,7 @@ Chef Compliance is the managed-endpoint entitlement. A customer with an active C
 The authorization code is a download credential, not a product license file. Both the online and air-gapped compressed Chef 360 packages contain the `license.yaml` associated with the authorization code. That extracted file is passed to the Chef 360 installer to license the cluster:
 
 ```bash
-sudo ./chef-360 install --license license.yaml
+scripts/chef360/install-server.sh --installer ./chef-360 --license ./license.yaml
 ```
 
 Do not substitute a Chef Automate, Chef Workstation, Chef Infra Client, or other traditional Chef product license file.

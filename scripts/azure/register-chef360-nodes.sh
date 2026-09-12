@@ -11,6 +11,7 @@ load_env_defaults "${STATE_FILE}"
 
 SSH_PRIVATE_KEY="${1:-}"
 CHEF_NODE_USER="${2:-chef}"
+validate_linux_username "${CHEF_NODE_USER}"
 NODE1_TARGET="${3:-${NODE1_TARGET:-node1}}"
 NODE2_TARGET="${4:-${NODE2_TARGET:-node2}}"
 CHEF360_SERVER="${CHEF360_SERVER:-${CHEF360_ENDPOINT:-}}"
@@ -37,14 +38,10 @@ require_command() {
 seed_host_key_if_missing() {
   local host="$1"
 
-  mkdir -p "$(dirname "${KNOWN_HOSTS_FILE}")"
-  touch "${KNOWN_HOSTS_FILE}"
-
-  if ssh-keygen -F "${host}" -f "${KNOWN_HOSTS_FILE}" >/dev/null 2>&1; then
-    return
-  fi
-
-  ssh-keyscan -H -T 5 "${host}" >> "${KNOWN_HOSTS_FILE}" 2>/dev/null || true
+  ssh-keygen -F "${host}" -f "${KNOWN_HOSTS_FILE}" >/dev/null 2>&1 || {
+    printf 'No trusted SSH host key exists for %s in %s. Add a verified key before continuing.\n' "${host}" "${KNOWN_HOSTS_FILE}" >&2
+    exit 1
+  }
 }
 
 find_node_id() {
@@ -52,8 +49,8 @@ find_node_id() {
   local hostname
   local primary_ip
 
-  hostname="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${target}" 'hostname -s')"
-  primary_ip="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${target}" "hostname -I | awk '{print \$1}'")"
+  hostname="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${target}" 'hostname -s')"
+  primary_ip="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${target}" "hostname -I | awk '{print \$1}'")"
   chef-node-management-cli management node find-all-nodes --pagination.size 1000 --profile "${CHEF360_PROFILE}" --format json | jq -r \
     --arg host "${hostname}" --arg ip "${primary_ip}" --arg target "${target}" '
       def attr($ns; $name): ([.attributes[]? | select(.namespace==$ns and .name==$name) | .value] | first // "");
@@ -116,7 +113,7 @@ fi
 
 require_command "ssh"
 require_command "scp"
-require_command "ssh-keyscan"
+require_command "ssh-keygen"
 bash "${ENSURE_SSH_ACCESS_SCRIPT}" "${RESOURCE_GROUP:-rg-chef360-linux}" "${NAME_PREFIX:-${OBJECT_OWNER_PREFIX:-chef360}-sa-linux}" "${SSH_SOURCE_CIDR_OVERRIDE}" >/dev/null
 
 if [[ -z "${CHEF360_SERVER}" || -z "${CHEF360_SIGNED_CONFIG_FILE}" ]]; then
@@ -154,15 +151,15 @@ for node in "${NODE1_TARGET}" "${NODE2_TARGET}"; do
     continue
   fi
 
-  scp -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" \
+  scp -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" \
     "${CHEF360_SIGNED_CONFIG_FILE}" "${CHEF_NODE_USER}@${node}:/tmp/chef-node-enrollment-cli.txt"
 
   if [[ -n "${CHEF360_COHORT_ID}" ]]; then
-    ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node}" \
-      "set -euo pipefail; export SERVER=\"${CHEF360_SERVER}\"; curl -sk \"\$SERVER/platform/bundledtools/v1/static/install.sh\" | TOOL=chef-node-enrollment-cli SERVER=\"\$SERVER\" VERSION=latest bash -; sudo mkdir -p /opt/chef-360/chef-node-enrollment-cli; sudo mv /tmp/chef-node-enrollment-cli.txt /opt/chef-360/chef-node-enrollment-cli/chef-node-enrollment-cli.txt; sudo chmod 600 /opt/chef-360/chef-node-enrollment-cli/chef-node-enrollment-cli.txt; sudo chef-node-enrollment-cli enroll-node --cohortId \"${CHEF360_COHORT_ID}\" --sign-config-file /opt/chef-360/chef-node-enrollment-cli/chef-node-enrollment-cli.txt"
+    ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node}" \
+      "set -euo pipefail; export SERVER=\"${CHEF360_SERVER}\"; curl --fail --location --show-error \"\$SERVER/platform/bundledtools/v1/static/install.sh\" | TOOL=chef-node-enrollment-cli SERVER=\"\$SERVER\" VERSION=latest bash -; sudo mkdir -p /opt/chef-360/chef-node-enrollment-cli; sudo mv /tmp/chef-node-enrollment-cli.txt /opt/chef-360/chef-node-enrollment-cli/chef-node-enrollment-cli.txt; sudo chmod 600 /opt/chef-360/chef-node-enrollment-cli/chef-node-enrollment-cli.txt; sudo chef-node-enrollment-cli enroll-node --cohortId \"${CHEF360_COHORT_ID}\" --sign-config-file /opt/chef-360/chef-node-enrollment-cli/chef-node-enrollment-cli.txt"
   else
-    ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node}" \
-      "set -euo pipefail; export SERVER=\"${CHEF360_SERVER}\"; curl -sk \"\$SERVER/platform/bundledtools/v1/static/install.sh\" | TOOL=chef-node-enrollment-cli SERVER=\"\$SERVER\" VERSION=latest bash -; sudo mkdir -p /opt/chef-360/chef-node-enrollment-cli; sudo mv /tmp/chef-node-enrollment-cli.txt /opt/chef-360/chef-node-enrollment-cli/chef-node-enrollment-cli.txt; sudo chmod 600 /opt/chef-360/chef-node-enrollment-cli/chef-node-enrollment-cli.txt; sudo chef-node-enrollment-cli enroll-node --sign-config-file /opt/chef-360/chef-node-enrollment-cli/chef-node-enrollment-cli.txt"
+    ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node}" \
+      "set -euo pipefail; export SERVER=\"${CHEF360_SERVER}\"; curl --fail --location --show-error \"\$SERVER/platform/bundledtools/v1/static/install.sh\" | TOOL=chef-node-enrollment-cli SERVER=\"\$SERVER\" VERSION=latest bash -; sudo mkdir -p /opt/chef-360/chef-node-enrollment-cli; sudo mv /tmp/chef-node-enrollment-cli.txt /opt/chef-360/chef-node-enrollment-cli/chef-node-enrollment-cli.txt; sudo chmod 600 /opt/chef-360/chef-node-enrollment-cli/chef-node-enrollment-cli.txt; sudo chef-node-enrollment-cli enroll-node --sign-config-file /opt/chef-360/chef-node-enrollment-cli/chef-node-enrollment-cli.txt"
   fi
   wait_for_enrollment "${node}"
 done

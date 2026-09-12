@@ -15,6 +15,13 @@ function Test-IsAdministrator {
   return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
+foreach ($address in @($Node1Ip, $Node2Ip)) {
+  $parsedAddress = $null
+  if (-not [System.Net.IPAddress]::TryParse($address, [ref]$parsedAddress) -or $parsedAddress.AddressFamily -ne [System.Net.Sockets.AddressFamily]::InterNetwork) {
+    throw "Node address must be an IPv4 address: $address"
+  }
+}
+
 if (-not (Test-IsAdministrator)) {
   $argList = @(
     '-NoProfile',

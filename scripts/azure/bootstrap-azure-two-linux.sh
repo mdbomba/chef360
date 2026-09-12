@@ -24,7 +24,7 @@ else
   NODE2_TARGET="${NODE2_TARGET:-node2}"
 fi
 KNOWN_HOSTS_FILE="${HOME}/.ssh/known_hosts"
-KNIFE_SSH_VERIFY_HOST_KEY="${KNIFE_SSH_VERIFY_HOST_KEY:-never}"
+KNIFE_SSH_VERIFY_HOST_KEY="${KNIFE_SSH_VERIFY_HOST_KEY:-always}"
 ENSURE_SSH_ACCESS_SCRIPT="${SCRIPT_DIR}/ensure-azure-ssh-access.sh"
 
 log_step() {
@@ -46,7 +46,7 @@ wait_for_ssh() {
 
   for ((attempt=1; attempt<=max_attempts; attempt++)); do
     log_step "Checking SSH readiness for ${host} (attempt ${attempt}/${max_attempts})"
-    if ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${host}" true >/dev/null 2>&1; then
+    if ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=5 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${host}" true >/dev/null 2>&1; then
       log_step "SSH ready for ${host}"
       return
     fi
@@ -60,14 +60,10 @@ wait_for_ssh() {
 seed_host_key_if_missing() {
   local host="$1"
 
-  mkdir -p "$(dirname "${KNOWN_HOSTS_FILE}")"
-  touch "${KNOWN_HOSTS_FILE}"
-
-  if ssh-keygen -F "${host}" -f "${KNOWN_HOSTS_FILE}" >/dev/null 2>&1; then
-    return
-  fi
-
-  ssh-keyscan -H -T 5 "${host}" >> "${KNOWN_HOSTS_FILE}" 2>/dev/null || true
+  ssh-keygen -F "${host}" -f "${KNOWN_HOSTS_FILE}" >/dev/null 2>&1 || {
+    printf 'No trusted SSH host key exists for %s in %s. Add a verified key before continuing.\n' "${host}" "${KNOWN_HOSTS_FILE}" >&2
+    exit 1
+  }
 }
 
 if [[ -z "${SSH_PRIVATE_KEY}" ]]; then
@@ -82,6 +78,8 @@ fi
 
 require_command "knife"
 require_command "ssh"
+require_command "ssh-keygen"
+validate_linux_username "${CHEF_NODE_USER}"
 bash "${ENSURE_SSH_ACCESS_SCRIPT}" "${RESOURCE_GROUP:-rg-chef360-linux}" "${NAME_PREFIX:-${OBJECT_OWNER_PREFIX:-chef360}-sa-linux}" "${SSH_SOURCE_CIDR_OVERRIDE}" >/dev/null
 
 NODE_ALIASES=("node1" "node2")

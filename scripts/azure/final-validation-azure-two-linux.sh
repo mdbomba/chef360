@@ -61,14 +61,10 @@ get_node_policy_value() {
 seed_host_key_if_missing() {
   local host="$1"
 
-  mkdir -p "$(dirname "${KNOWN_HOSTS_FILE}")"
-  touch "${KNOWN_HOSTS_FILE}"
-
-  if ssh-keygen -F "${host}" -f "${KNOWN_HOSTS_FILE}" >/dev/null 2>&1; then
-    return
-  fi
-
-  ssh-keyscan -H -T 5 "${host}" >> "${KNOWN_HOSTS_FILE}" 2>/dev/null || true
+  ssh-keygen -F "${host}" -f "${KNOWN_HOSTS_FILE}" >/dev/null 2>&1 || {
+    printf 'No trusted SSH host key exists for %s in %s. Add a verified key before continuing.\n' "${host}" "${KNOWN_HOSTS_FILE}" >&2
+    exit 1
+  }
 }
 
 resolve_expected_cohort_id() {
@@ -125,7 +121,8 @@ fi
 require_command "az"
 require_command "knife"
 require_command "ssh"
-require_command "ssh-keyscan"
+require_command "ssh-keygen"
+validate_linux_username "${CHEF_NODE_USER}"
 require_command "chef-node-management-cli"
 require_command "jq"
 bash "${ENSURE_SSH_ACCESS_SCRIPT}" "${RESOURCE_GROUP}" "${NAME_PREFIX}" "${SSH_SOURCE_CIDR_OVERRIDE}" >/dev/null
@@ -178,22 +175,22 @@ for i in 0 1; do
   fi
 
   seed_host_key_if_missing "${node_target}"
-  if ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_target}" true >/dev/null 2>&1; then
+  if ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_target}" true >/dev/null 2>&1; then
     ok "SSH connectivity works for ${CHEF_NODE_USER}@${node_target}"
   else
     fail "SSH connectivity failed for ${CHEF_NODE_USER}@${node_target}"
     continue
   fi
 
-  if ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_target}" "sudo -n true" >/dev/null 2>&1; then
+  if ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_target}" "sudo -n true" >/dev/null 2>&1; then
     ok "Passwordless sudo works for ${CHEF_NODE_USER}@${node_target}"
   else
     fail "Passwordless sudo failed for ${CHEF_NODE_USER}@${node_target}"
   fi
 
-  chef_timer_enabled="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_target}" "sudo systemctl is-enabled chef-client.timer" 2>/dev/null || true)"
-  chef_timer_active="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_target}" "sudo systemctl is-active chef-client.timer" 2>/dev/null || true)"
-  chef_client_version="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_target}" "chef-client --version" 2>/dev/null || true)"
+  chef_timer_enabled="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_target}" "sudo systemctl is-enabled chef-client.timer" 2>/dev/null || true)"
+  chef_timer_active="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_target}" "sudo systemctl is-active chef-client.timer" 2>/dev/null || true)"
+  chef_client_version="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_target}" "chef-client --version" 2>/dev/null || true)"
 
   if [[ "${chef_timer_enabled}" == "enabled" ]]; then
     ok "chef-client.timer is enabled"

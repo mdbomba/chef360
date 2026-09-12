@@ -28,6 +28,11 @@ This runbook covers deployment, status checks, and teardown for the local Azure 
 - Access to the target subscription/resource group
 - A populated local parameter file copied from the example
 - Optional: `TEMPLATE_SPEC_ID` when using a published template spec
+- Verified SSH host keys for each node in `~/.ssh/known_hosts`. The bootstrap,
+  enrollment, and validation scripts fail closed rather than trusting
+  `ssh-keyscan` output. Obtain each fingerprint through a trusted out-of-band
+  path, verify it, then add the key for both its IP address and `node1`/`node2`
+  alias before running those scripts.
 
 ## Optional local auth bootstrap
 

@@ -102,20 +102,11 @@ function Invoke-Checked {
 function Seed-HostKeyIfMissing {
   param([string]$HostName)
 
-  $dir = Split-Path -Parent $KnownHostsFile
-  if (-not (Test-Path -LiteralPath $dir)) {
-    New-Item -ItemType Directory -Path $dir -Force | Out-Null
-  }
-  if (-not (Test-Path -LiteralPath $KnownHostsFile)) {
-    New-Item -ItemType File -Path $KnownHostsFile -Force | Out-Null
-  }
-
   & ssh-keygen -F $HostName -f $KnownHostsFile *> $null
   if ($LASTEXITCODE -eq 0) {
     return
   }
-
-  & ssh-keyscan -H -T 5 $HostName 2>$null | Add-Content -LiteralPath $KnownHostsFile -Encoding Ascii
+  throw "No trusted SSH host key exists for $HostName in $KnownHostsFile. Add a verified key before continuing."
 }
 
 function Test-NetworkPort {
@@ -218,7 +209,6 @@ if (-not (Test-Path -LiteralPath $SshPrivateKey -PathType Leaf)) {
 Require-Command 'az'
 Require-Command 'knife'
 Require-Command 'ssh'
-Require-Command 'ssh-keyscan'
 Require-Command 'ssh-keygen'
 Require-Command 'chef-node-management-cli'
 Require-Command 'jq'
@@ -300,7 +290,7 @@ for ($i = 0; $i -lt 2; $i++) {
   }
 
   Seed-HostKeyIfMissing -HostName $nodeTarget
-  $sshBase = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
+  $sshBase = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
 
   if (Test-NetworkPort -ComputerName $nodeTarget -Port 22) {
     Write-Pass "Network port check passed (Test-NetConnection style): ${nodeTarget}:22 reachable"

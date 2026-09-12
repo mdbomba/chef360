@@ -42,6 +42,12 @@
       "topics": ["installation", "single-node", "hyperconverged", "non-ha", "admin-console", "apps-console", "mailpit", "airgap", "velero", "license", "preflight", "operations"]
     },
     {
+      "id": "operations-traditional-recovery-installation",
+      "path": "operations/traditional-recovery-installation.md",
+      "title": "Traditional and Recovery Installation",
+      "topics": ["installation", "traditional", "recovery", "disaster-recovery", "config-values", "tls", "preflight", "operations"]
+    },
+    {
       "id": "architecture-overview",
       "path": "architecture/overview.md",
       "title": "Platform Service Overview",

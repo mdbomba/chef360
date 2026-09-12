@@ -12,6 +12,22 @@ if [[ -z "${NODE1_IP}" || -z "${NODE2_IP}" ]]; then
   exit 1
 fi
 
+is_ipv4() {
+  local value="$1"
+  local -a octets
+  local octet
+  IFS=. read -r -a octets <<<"${value}"
+  [[ "${#octets[@]}" -eq 4 ]] || return 1
+  for octet in "${octets[@]}"; do
+    [[ "${octet}" =~ ^[0-9]{1,3}$ ]] && ((10#${octet} <= 255)) || return 1
+  done
+}
+
+if ! is_ipv4 "${NODE1_IP}" || ! is_ipv4 "${NODE2_IP}"; then
+  printf 'Node addresses must be IPv4 addresses.\n' >&2
+  exit 1
+fi
+
 if [[ ! -f "${POWERSHELL_SCRIPT}" ]]; then
   printf "PowerShell hosts update script not found: %s\n" "${POWERSHELL_SCRIPT}"
   exit 1

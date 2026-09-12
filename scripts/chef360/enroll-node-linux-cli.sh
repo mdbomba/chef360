@@ -15,6 +15,7 @@ NODE_URL="${6:-${NODE_TARGET}}"
 COHORT_NAME="${CHEF360_COHORT_NAME:-}"
 ENSURE_SSH_ACCESS_SCRIPT="${SCRIPT_DIR}/../azure/ensure-azure-ssh-access.sh"
 SSH_SOURCE_CIDR_OVERRIDE="${SSH_SOURCE_CIDR:-}"
+validate_linux_username "${SSH_USER}"
 
 log_step() {
   printf "[%s] %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
@@ -107,7 +108,7 @@ if [[ -x "${ENSURE_SSH_ACCESS_SCRIPT}" ]]; then
     "${SSH_SOURCE_CIDR_OVERRIDE}" >/dev/null
 fi
 
-if ! ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_KEY_FILE}" "${SSH_USER}@${NODE_TARGET}" true >/dev/null 2>&1; then
+if ! ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_KEY_FILE}" "${SSH_USER}@${NODE_TARGET}" true >/dev/null 2>&1; then
   printf "SSH connectivity failed for %s@%s\n" "${SSH_USER}" "${NODE_TARGET}"
   exit 1
 fi
@@ -123,8 +124,8 @@ fi
 
 log_step "Enrollment URL set to '${NODE_URL}'"
 
-remote_hostname="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_KEY_FILE}" "${SSH_USER}@${NODE_TARGET}" "hostname -s" 2>/dev/null || true)"
-remote_primary_ip="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i "${SSH_KEY_FILE}" "${SSH_USER}@${NODE_TARGET}" "hostname -I | awk '{print \$1}'" 2>/dev/null || true)"
+remote_hostname="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_KEY_FILE}" "${SSH_USER}@${NODE_TARGET}" "hostname -s" 2>/dev/null || true)"
+remote_primary_ip="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_KEY_FILE}" "${SSH_USER}@${NODE_TARGET}" "hostname -I | awk '{print \$1}'" 2>/dev/null || true)"
 
 existing_node_line="$(find_existing_node "${remote_hostname}" "${remote_primary_ip}")"
 

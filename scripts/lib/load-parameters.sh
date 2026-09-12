@@ -25,6 +25,25 @@ load_env_defaults() {
   done < "${file}"
 }
 
+validate_linux_username() {
+  local value="$1"
+  [[ "${value}" =~ ^[a-z_][a-z0-9_-]*\$?$ ]] || {
+    printf 'Invalid Linux username %q.\n' "${value}" >&2
+    return 1
+  }
+}
+
+validate_ipv4_address() {
+  local value="$1"
+  local -a octets
+  local octet
+  IFS=. read -r -a octets <<<"${value}"
+  [[ "${#octets[@]}" -eq 4 ]] || return 1
+  for octet in "${octets[@]}"; do
+    [[ "${octet}" =~ ^[0-9]{1,3}$ ]] && ((10#${octet} <= 255)) || return 1
+  done
+}
+
 # load_secret VAR [rc_file ...]
 #   Resolve a secret/value for the named variable. Returns the currently
 #   exported value if already set in the environment; otherwise scans
@@ -90,6 +109,11 @@ load_chef360_parameters() {
       fi
     fi
     CHEF360_SERVER="${CHEF360_SERVER:-${CHEF360_ENDPOINT}}"
+  fi
+
+  if [[ -n "${CHEF360_SERVER:-}" && ! "${CHEF360_SERVER}" =~ ^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?$ ]]; then
+    printf 'Invalid CHEF360_SERVER %q. Expected an HTTPS URL with an optional port.\n' "${CHEF360_SERVER}" >&2
+    return 1
   fi
 
   export PROVIDER CHEF360_SERVER
