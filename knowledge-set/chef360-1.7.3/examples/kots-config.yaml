@@ -1,195 +1,146 @@
+# -----------------------------------------------------------------------------
+# kots-config.yaml — SCRUBBED EXAMPLE (placeholder) ONLY
+# -----------------------------------------------------------------------------
+# This file is a deliberately scrubbed example. It contains NO real secrets —
+# every secret-bearing value has been replaced with a "<scrubbed: ...>" marker.
+#
+# Real values are NOT stored under this repository (git history is unforgiving).
+# The authoritative real kots config lives OUTSIDE the repo:
+#
+#   Real config file   -> ~/.secrets/chef360-kots-config.yaml   (0600)
+#   TLS leaf cert/key  -> ~/certs/<vm>_chef360-2.crt / .key     (key 0600)
+#   TLS chain/ca       -> ~/certs/<vm>_chef360_chain.crt
+#
+# Install workflow (see WORKFLOW.md — this matches the canonical steps):
+#   1. If the real ~/.secrets/chef360-kots-config.yaml exists (previous/new
+#      project), the installer passes it via `--config-values` and Chef 360
+#      auto-deploys; the operator then watches http://<VM_IP>:31101 (Mailpit)
+#      for the admin activation email and follows the email instructions.
+#   2. If the config file is ABSENT (fresh project, no kots-config yet), the
+#      installer OMITS the --config-values argument and the operator instead:
+#         a. browses to https://<VM_IP>:30000  (Admin Console) to configure
+#            and deploy from the browser, then
+#         b. watches http://<VM_IP>:31101      (Mailpit) for the admin
+#            activation email and follows the instructions in the email.
+#
+# The non-secret defaults below (ports, nodeports, subdomains, tenant fields,
+# flags) are kept because the plan/stable/cert scripts dereference them by key.
+# =============================================================================
 apiVersion: kots.io/v1beta1
 kind: ConfigValues
 metadata:
   name: chef-360
 spec:
   values:
-    api::gateway::admin::token::isenabled::public:
-      default: "0"
-    api::gateway::audit::enable:
-      default: "1"
-    api::gateway::auth::apitoken::isenabled:
-      default: "0"
-      value: "1"
-    api::gateway::body::limit:
-      default: "10"
-      value: "10"
     api::gateway::cache::enabled:
       default: "1"
-    api::gateway::certificate::file:
-      filename: chef360.crt
-      value: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUV1ekNDQXFPZ0F3SUJBZ0lVQXFidSs1c0FhNEg3R2l6Q2tiRWpNcHlWREpjd0RRWUpLb1pJaHZjTkFRRUwKQlFBd1ZqRUxNQWtHQTFVRUJoTUNWVk14RURBT0JnTlZCQWdNQjBGeWFYcHZibUV4RERBS0JnTlZCQW9NQTJ4aApZakVOTUFzR0ExVUVDd3dFWkdWdGJ6RVlNQllHQTFVRUF3d1BTVzUwWlhKdFpXUnBZWFJsSUVOQk1CNFhEVEkyCk1EY3hNekF5TkRZd05sb1hEVEkzTURjeE16QXlORFl3Tmxvd1JURVpNQmNHQTFVRUF3d1FZMmhsWmpNMk1DNWsKWlcxdkxteGhZakVOTUFzR0ExVUVDd3dFWkdWdGJ6RU1NQW9HQTFVRUNnd0RiR0ZpTVFzd0NRWURWUVFHRXdKVgpVekNDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DZ2dFQkFPZmpCeVk3UmpkWklZK28xSGJjCkxKdWpTQkNSbEc2eG1tWGUrQmZYMlFUVGJIanoySE5kOW1ReEJuS3UwRTJhNTc5YVZtMzNVaUFlNlBkdDBuV1kKMHh5eWtJMkszU09JVWt1OXpzZWVLZGZtNmlVTHgrVHlDRTN1OUZTNTVQNE1oSnJXNEhnWk5RUXYrVC9KOW1tSQpwaDJwNXVPVjdjVHVYc3NrTzNHaVFqNWNPaDNEcXRveWxSbWFMam5EVFhTRlFqdnBBMitHajE5RmtOL2VJYkl6Cm1OcFVxdWxFNU9Lb2s1UHBQVUE5QVBRUXh4VWR5QW9oek1Id2phZlhOUklzMFpHN0hjTGloV1pCTm0xR3hkaGsKbWpxYVdKUkxQTVYvNlBuMnVSZU1TNGdOYm5rZ1dGRlQ1OHVoakwyT1RVY0lRYnJ2eDJYMC9zbnZLRHAycjl1MQpiMk1DQXdFQUFhT0JrVENCampBTEJnTlZIUThFQkFNQ0JlQXdFd1lEVlIwbEJBd3dDZ1lJS3dZQkJRVUhBd0V3CktnWURWUjBSQkNNd0lZSVFZMmhsWmpNMk1DNWtaVzF2TG14aFlvSUhZMmhsWmpNMk1JY0VDZ0FBRkRBZEJnTlYKSFE0RUZnUVVsZ0JJM1djdlcwaGZxb1hDRlRsZ3lLZkNLWkV3SHdZRFZSMGpCQmd3Rm9BVUZTUE5wOFNiQU5PVwpOOTdsYjNjdkhGYlM3NHd3RFFZSktvWklodmNOQVFFTEJRQURnZ0lCQUV5bVBlZnFWNGZuWFZrZjNIcS8waTA4CkNtcFRFWksxa1ZQRlJaY25xTHhhMlRUNnQwTUV0d1ZieUxDS1pnV1RldkZkZzkvNWtzRXNSUnJnYjBHQTJyMEUKMjRQTnZNSlBVZGFlMGViWXJxVTl4bnAyMm05WDZmSmpKaVY0dC9oZU9BUnFRcWkzbnVwd3dkSDlPcitEN2trYwpURWZnSUx0eEpoOE1kcEF6MFJxRE82S3h5RkVUQ290ZUt0QUJEblJkQ3VUK3c1YW9hOTRuVkRsbS9nd29zWDhCCk9NNnVuVUJXeXhQRDhoNENiWFlvNXUyRzVBbXJPeERQbmZObE42dFlON012d0ZIN09ING0wRi9BSUNRT3d3VUcKR1RVMzZYZTNlRUxYdy9ETTl2Vkt6a2N2aEJtS0NhS2lDVmhNeU5YTVZuU3FVTXpNUmsrVXRrTndpVzlyc0tVSApyMU1HV3JXNEpmeEtVbVFlY1M0SEhzVkV0Z3RMWDRqS0FrUXhvcnRBeHBwRUNmTE1rUXB1MG9DdWtveFhpeDI1CjZES3czZDRBamlEN2cwUEUwbExKdmQ5SytmV0FYNnlaNHVhdUtJdGhqaDI1eDc1MkJDYjZFREt4UGlOVDZ3M2UKYnlVaVpnaHg3YmoreEZpdTZLSjRSSWRRemxDc2NxV2dWcldDYW1FS0lVRllRd2lpSWJ0c1FFVlQ3K2p5ZENNagorcXkrQzJtUUZaSHJaVlhUc0NISjlzRDJOVlE1T0J3c1c4Z25BYm9EMkJnRHZxWG13OU9JQ2lSRFZkc1MrWXJZCnZ1MmsxVGo3cytCR1h1bGNuc3daaDloeTRKdnEvUDU0YzRseVBLWXplUVBEUHl1TTkzazJvZS82Yzk3czBsMW0KT2JlRURuNmduMFNGL0plcDhDbzgKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
-    api::gateway::courier-orchestrator-worker::max-workers:
-      default: "50"
-      value: "50"
-    api::gateway::ingest-worker::min-replicas:
-      default: "1"
       value: "1"
+    api::gateway::certificate::file:
+      filename: chef360-2.crt
+      value: "<scrubbed: base64 TLS leaf cert — real value in ~/certs>"
+    api::gateway::chain::file:
+      filename: chef360_chain.crt
+      value: "<scrubbed: base64 TLS chain — real value in ~/certs>"
+    api::gateway::hostname:
+      default: chef360-1-7-3.demo.lab
+      value: "<scrubbed: VM hostname — real value in ~/.secrets>"
     api::gateway::install::admin::token:
-      value: devsecops_progress
+      default: ""
+      value: "<scrubbed: admin token>"
     api::gateway::loglevel:
       default: info
-    api::gateway::nodemanagement::maximum::checkin:
-      default: "60"
-      value: "60"
-    api::gateway::nodemanagement::minimum::checkin:
-      default: "5"
-      value: "5"
+      value: info
     api::gateway::nodeport::nginx:
       default: "31000"
       value: "31000"
     api::gateway::private::key::file:
-      filename: chef360.key
-      value: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRRG40d2NtTzBZM1dTR1AKcU5SMjNDeWJvMGdRa1pSdXNacGwzdmdYMTlrRTAyeDQ4OWh6WGZaa01RWnlydEJObXVlL1dsWnQ5MUlnSHVqMwpiZEoxbU5NY3NwQ05pdDBqaUZKTHZjN0huaW5YNXVvbEM4Zms4Z2hON3ZSVXVlVCtESVNhMXVCNEdUVUVML2svCnlmWnBpS1lkcWViamxlM0U3bDdMSkR0eG9rSStYRG9kdzZyYU1wVVptaTQ1dzAxMGhVSTc2UU52aG85ZlJaRGYKM2lHeU01amFWS3JwUk9UaXFKT1Q2VDFBUFFEMEVNY1ZIY2dLSWN6QjhJMm4xelVTTE5HUnV4M0M0b1ZtUVRadApSc1hZWkpvNm1saVVTenpGZitqNTlya1hqRXVJRFc1NUlGaFJVK2ZMb1l5OWprMUhDRUc2NzhkbDlQN0o3eWc2CmRxL2J0VzlqQWdNQkFBRUNnZ0VBY2dsS2UwazhJejBBamJzcjNWWXkwOGx0UjhTb04vVzhwZXVNbTRFcGR6K1kKUVRVK0ZhSTRhUlpaQXU0b2YzbTJEWHNhTlJNalBxdWt5d1dsc2ZKWm8rdkd2ZXowQ3FUZ1ArSlV2Z053dFg0WQpXT2FkdytBcEtGWmlyd1lLY010c0xRK09MVkhNS2thRGI1VGRTeElLQzEyQ01Cc0w1c1NKTnFLWFh5ODZINXJnCnh3TDZGMFFTbFRFTXhWdEE2VWxWL1AxMW01YVRRdS9IUE1lZE5xQ241VWRXQXhxR0hac0FYN2hMcjNOTVZ5UXEKTlF4dmFpVlFYY1pjZUswNGJBellUUGZMa2Zua09yY20xdGRTd0RJMGRmVjgrT3FaMXc2dDRRL1lHNy96ZmtpNQpNeDZKUXdsU3N0dXNnYzhSLzJrTHdaeWc2UkVCSWRBYWVTeGc0eEdDelFLQmdRRDN3SzdEU3ptQjl5MU5kTUVyCmZsa09IRGM1Z2N6U2Z2UE9YUEtlY1o2QVVYRXYwbURPWXpJR2dHMjFKeUtXdE1ZWTNNY3QwTEV4a1FjVnFxaXYKbXRKZloxTzl0c1RvWWtZT0hvbmlsc0dTeC91UjdsQUNSWE41TGxwZy9rYjFqTDRPUmt4dFJwV3laN3pPVTFXbAp2eVBsSHBJdFdVemtBcHEyeWRabVVyTFNIUUtCZ1FEdm15TjRvdFZNN3crRkZYaVh5czlIcENjbWVmdHZraEY1CnQ0NC81OFMyMGU1UEQ4a2ZucFE0OGhuQTdyY2U3bzhHQzJRNW05QUJoRGgrOTNZU1NEcW92RnMxeXMzc1dJTUUKeFQ4aUJLTi9HYXl1U0t1RXBLZGwyVWhxckRsMGcwaitZWjlQOXkvRHB3aDA3aHBVVnZGWDVESUZxZ0UrWklaTAptTjNnaGxXUGZ3S0JnRk5TbVRRVEk1Y2pJemhPa1B6b3RGaTdncE16cFVnUjdEczJKVjdHUlpGUVVxbkxya1ViCk5XTGNaSWt0VFVPMExuK0VHUFMrb0NsVVpqYVNPOE03Wlk4eWVBWnc1bzVsSnJ4dTV0NnU1eEZQY3Jza2xBSC8KaTVOdzFIS1VjaGI1SzU0dlpGcklCMmFGM3dqaEhBZnZYY29iMnZ1bmNlV3BQcEZGRm5jNVR1eTlBb0dCQU5oUApTVVdXVTFSQ0dkTytuNEVCc2dGdU8zM3I3OGM0cWhnbFV3RjBYazNoMWUrQVE4VU01NmxGUDJUQzNZVEtQMHBvCnJGR3B6YTRnek5RcTJXZ0YxeGNQL0pQaWcrY1R2U3hvV2VkL0lvOFRBYWJScWk1MGF6OXlXb01hK2orcWFoSmsKMVd0ZXI3dEZKMGhRMEdwRmwxb09nKzVESFI1VHFEM0ZRc0Y0NVBOSEFvR0FPcXVNOHFxZ0RNY2hmbW9qV1oxdAp4YjZDaEZFcGVJZFJHYjZBRjNRdWIrZ2V4YmExZ1pXQVRBY1hYRW9JeHh6ZVRJVFA2L056TnRkSVhXcDV6Qk9YCm5Za0d6WGFnS3pCUmp0VUF5U1Mxd1E4TzBMaDRHNWk1K1Y3bnNwT3Z2S3Jvbi9JMjdpeE1scHBQOWlVQlJWMEYKZUk4emZ5RjlVSEVvTmNQVDVuRklXUmM9Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
-    api::gateway::private::key::signer: {}
-    api::gateway::public::key::expiry:
-      default: "1924905600"
-      value: "1924905600"
-    api::gateway::public::key::signer: {}
+      filename: chef360-2.key
+      value: "<scrubbed: base64 TLS private key — real value in ~/certs>"
     api::gateway::root::cert::file:
       filename: chef360_chain.crt
-      value: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUZ0VENDQTUyZ0F3SUJBZ0lVQ0RKTXpEY2c2V2VjUWJrYytJYjF3ZUtIRU5Jd0RRWUpLb1pJaHZjTkFRRUwKQlFBd1lqRUxNQWtHQTFVRUJoTUNWVk14RURBT0JnTlZCQWdNQjBGeWFYcHZibUV4RWpBUUJnTlZCQWNNQ1ZSdgpiV0p6ZEc5dVpURU1NQW9HQTFVRUNnd0RiR0ZpTVEwd0N3WURWUVFMREFSa1pXMXZNUkF3RGdZRFZRUUREQWRTCmIyOTBJRU5CTUI0WERUSTJNRGN4TXpBeU5ETXhPVm9YRFRRMk1EY3dPREF5TkRNeE9Wb3dZakVMTUFrR0ExVUUKQmhNQ1ZWTXhFREFPQmdOVkJBZ01CMEZ5YVhwdmJtRXhFakFRQmdOVkJBY01DVlJ2YldKemRHOXVaVEVNTUFvRwpBMVVFQ2d3RGJHRmlNUTB3Q3dZRFZRUUxEQVJrWlcxdk1SQXdEZ1lEVlFRRERBZFNiMjkwSUVOQk1JSUNJakFOCkJna3Foa2lHOXcwQkFRRUZBQU9DQWc4QU1JSUNDZ0tDQWdFQXk4K2lBWlFtQ3BQMXdVRTZKTlI1V01YcjhROGgKUzBhM3h4MFBtLzdzQStneWZ1bWtKTk52K3N6Wms3UUFaL3B1TDIvakpLMVh2Vmh1Q0FDb29WdjJKUzBlaDd0aApZckhqNlRGZ0JNNndWZE5YYTVHSDczY1g3cDU2NGlZbkFDUnJJSzJKdkFjK2VhYThGVHkzTzFZN3JKbURMQ2IwCjBOZ2hxaitsY1gxK0tWdndsT1BNQXVEMlFCTDduUlJlN0lQODRsNDAvUitYNkE1ZFlKd2VLS1pzcG1DSk84Z28KdCtIY01mVHB5SnQrU1RnM2VNaVZpYTZMVXpPVE52cENsc1R4ak1HUFhHNGJIQ01SN2Y4N0c3REtOZVVDWlpRWApDLzRrTG9FcG9rQ1ZoRmphQTZyT0tlZFFlR2pkK2E2Wk5aWVlkcTJ1bnBqdFNRSy9LcGVKc1ErVHBaT3FRSndECkZ3cnlxcnBBSUpIUzRINzk1cDlRMi9NTlczbE1uampMQmFhdVJwVnpMclhhSGVEWTU5WXozVityUkh2aXU0SG8KZS9wZTRDTTFoell1cU01YnBHUnRwdVJWZlQ0enF0czllOGN3NjZiVEVMRUpmZlNUYWFtdmllS3gxY2s3QUl3QgozSkNEZnQ4YlM1RUVoRkNhbTRuUnBmaUh0S0s5cmJ6dGdiL3ZVelhURzhTTnNyYS9JMW1ieldFbFhCMXlLK1lUCk4vWWVZSmtvb0g0UytYRUN5dmRZRmpZNjVsMUJCM2lLdnJIZ1BYTVc1R0NDWUdTa0tKSmovZWVmZ3Qzc1BpYVEKOGtDVFBJcWNlTU1EbmE1ZkgxdUdxL3lxL01pTU9aSzh6QmtUdXgvZ0xtL2dWb3Z6ekM4c3dvYWJyWEpiU0F2bgpxMTNPOUp1MnpCb0NUdTBDQXdFQUFhTmpNR0V3SFFZRFZSME9CQllFRkRsQzRnOUdsZnhmMyt4Z2NXYTIxZjRTClBBRU1NQjhHQTFVZEl3UVlNQmFBRkRsQzRnOUdsZnhmMyt4Z2NXYTIxZjRTUEFFTU1BOEdBMVVkRXdFQi93UUYKTUFNQkFmOHdEZ1lEVlIwUEFRSC9CQVFEQWdFR01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQ0FRQjdPMFJTQlBWaQpiOFNzRWp5U290SzdIUDUxdS9YU2RZNzFrM2YzWklWWnJlaEsrb1BXd2RyU1lYWk4zVFBFV2pUUmlkZjR3dWZtClZCQjBPTytyRTZBV0E4Wi9zNFFiclNJMTRkejQ4Vm5lWldFdm5zNk9ObHhuYlJJaldaVkhCcGVGUGt4R0YzZEUKa2VxS3hBK2p4dXA0Qk1KM3k2Z0hsQU9OR3hFcU1kemtPbVlrRHlJd2ZmeWJBVmhic0RZU3Y0VzNNbElpaXowWQo1czVMcDdLWnBQTEpHbHF4VWlnOXZ5WEsyR0VGSFpNcnB2R2RkSVFVd0Raci9EZEtNSEhvUEVkK2FvSHIzNEt2CnA1NWpDUVo0TElFeDloUVV0SU42UVVxRE5OaldtQjZXSnBDVEMxekg2T2ZsZHpKVCtzMGJNN1YvZHVvaENVc08KTUJwZUVLYnlPNUFwQ1JwV0xkUkJKYlZ5TCtvQU5YQ1lBNXdBNWJqSzB3L00reTlBL25CT21ab2w0eUdiVXU0SgpScUhURXljYmtRbCtaendZR05kNWp0OUNmVXJlSEFOdytzaG1ZUUpmYVBYWGFWRU1FdGRWNHp3QUJZcGd1cTFtCktDaG9QeWZVcjZMb09RMXhnNEpWN2Z1bFlBOGZtQU9xRk55V2Vid0F0MTg3T0dBTTR5QzRhb1gveEcraXpzMTkKVmc5NnZ3bTZvVHY2NVpyUXFoWVJodjZhektFSVJsaTUvbXJBZGFxK0ZHOTIrTk1PaGc1aFd4VEJQRUhGZ2x6ego4cE5Ga2YvWWpjQjJpZ2hxclJWdVlOSjdMNityWjNSVmJXQU8zdVRTR25aQzk3aGRFOUIwVlY4SzRUY1lCaDVCCmFvTE5wSWNYWlJldVlsb1J1ZXlYb3NZdjIrTDlpNCs0Snc9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tQkVHSU4gQ0VSVElGSUNBVEUtLS0tLQpNSUlGbWpDQ0E0S2dBd0lCQWdJQ0VBQXdEUVlKS29aSWh2Y05BUUVMQlFBd1lqRUxNQWtHQTFVRUJoTUNWVk14CkVEQU9CZ05WQkFnTUIwRnlhWHB2Ym1FeEVqQVFCZ05WQkFjTUNWUnZiV0p6ZEc5dVpURU1NQW9HQTFVRUNnd0QKYkdGaU1RMHdDd1lEVlFRTERBUmtaVzF2TVJBd0RnWURWUVFEREFkU2IyOTBJRU5CTUI0WERUSTJNRGN4TXpBeQpORE15T0ZvWERUTTJNRGN4TURBeU5ETXlPRm93VmpFTE1Ba0dBMVVFQmhNQ1ZWTXhFREFPQmdOVkJBZ01CMEZ5CmFYcHZibUV4RERBS0JnTlZCQW9NQTJ4aFlqRU5NQXNHQTFVRUN3d0VaR1Z0YnpFWU1CWUdBMVVFQXd3UFNXNTAKWlhKdFpXUnBZWFJsSUVOQk1JSUNJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBZzhBTUlJQ0NnS0NBZ0VBd2p0SgpiWXVoNk4vcDA1cHg2VFhmTDY3dXB3UklGNjAxMm12TERnWDd0NXBrRTg1c295dWo0cTRqMk4ranZXSU1yd08xCmpWbDhpSVNZZGczVzNveFdQbE9GZjM2SWRYZjJvVnRWclgxTWFadjYzanRHR3NnV083V1lVZ21uSWNIeVlGdncKT3doVllQclRrOUV4Vk5QeEpwTCtiZUp3T3lrR2dURkcrNGNLUkN1NTUvRDZHanRVUFh1NVNYZS9GRnNlQ2xmMwpCN2xEU0RyQ2wxSVdKaGhRSmxmN1Z6V2tCTkRaa0c2S2hGMVcxT2hOQUczQy93eDNFb3ROUUYzbHNNeWxYckxxCmVxZGc1ZnVweHEzZmlNRStvdEhJblg5Y3REdlRBakhxd1lDSUlwdGxjOWtHVFJ0ZDFMTGFrZXNna3lsZlExZDIKeW5ESTZmZEhyUWw0Sk9Sakt5V3E1NG5KOVovSUJEZUNUQng0bG1VaE02dEJhVkhaSzhOY3dCUkpQVEJocU50Ywp5SjdLVVdWdnAwbkxMaHRJeXJ1aTh5QXlXVTdsYzFDY0p6VzRINUVZRkdBdU1JV0JvVENub3dKMlkwU0VSWVpYCkFGTmdGL2tLelpjMHdhOFZyK2NPeXRDeml3bGFHVVZmcGhIeUJGSGhYUDVFMVRMcEFtOEZEcksxa1l6R1NvRFcKdEh5Mk0yczBsTzE4d0ZEazQ3VjFBNDI1TEFyclAraS9UU3RQUDlkODZPNGhESjVleDQzbEl2Tkg3cXQ0Mjkwdwo2a2wvK0VVN0djR2RHM2Y4dmRpZmlLUUFjTGdNQStOd2NsaUFubjY5SHdYV2FyaGZiU0dINVdXWDdXdkV1b0I3CmRxY1NWUGYzeE1Wb3QxZTluS2x0b1Jhb0k0Mm5SNklHSlREYTFZc0NBd0VBQWFObU1HUXdIUVlEVlIwT0JCWUUKRkJVanphZkVtd0RUbGpmZTVXOTNMeHhXMHUrTU1COEdBMVVkSXdRWU1CYUFGRGxDNGc5R2xmeGYzK3hnY1dhMgoxZjRTUEFFTU1CSUdBMVVkRXdFQi93UUlNQVlCQWY4Q0FRQXdEZ1lEVlIwUEFRSC9CQVFEQWdHR01BMEdDU3FHClNJYjNEUUVCQ3dVQUE0SUNBUUJ0Y1NQcElZa0JrdVpYdk4vN1YrdVBtRUk4OU80SHJHRFJiNnd0ZE91ckR5NDkKdytyQmExOUllYk1jbzBlVlpQamtua2d5WmZOVkVwZ2hHWXBBeVhBNkxGVmYxTUt6UURyMXhVS2JSSERhREQvdAp6a25OTElBdThveUoxbkpZUHB3M0RoWTlXWFFzOFN1cjJtUm8rN2JwQTgxKzBpK21yT0drMFRSbHJsUUNYaDJXCmhwbCtVRmh0ME00blNxcDJkenlmWlNkZys4VFkra2tqYUF4QWRwRTJEVXBPRXM4Y0N3ZUFiUExzNWdlZjBnVEYKWjVaRUVHOTU4QXY3VjJ0RnpMa0c2RzNxTitWY1NLMDY4cU9aRG4wM2MwYkpSZmw3Y1F0V2ZEL2gzblZ1MHhtUQpwbVd4MVJTVkg4eGhxZHl3VDJEdkc0MGdhMnNYeEgvUXBkRkpaeG1EalBGUHZZTnJmK3FqcVpIcFpsN2RaWG9RCkNSSWh3YWwrRytkZloyNEpleEQzdTlqd3VHRkd2WUtjNUtrcFVvZWxRUVIvYkhlT0l6RklvM0RLY1d5ejlJYVUKL2ZSU0xQQzNQOGZsVWN0dWFYWjNvOWhLTUZvc1dUbG5Jd1ZQdWdyZjQ2OTMycndTOWUyeDZ6U3l0akpJVjZ4Sgo0T3FZWEkrY0J2RnA0UnJWajFwVnZ3U3BhdjVNaWFuS1BRU3l6S3gwQ3g2L3FmSGJXaDlyL1FZcWhzNy9sZnZkCldWRGhkaDNnTFF6ZVRFYzlRNlpsUktQMld3a2pqR2ZXWjVLbll1VG5aWm1obk1ZdGlBbkZqRHVwQjNHWTkycGQKdy96NWJ0UWZKMWl4WUY5TXlpQmVqdXNuNFVnSmlQNkhtQTVvMlN5MjVLWlN3U1dBK0p1eFJMd2loYXEzVlE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
-    api::gateway::skip::cert::validation:
-      default: "0"
-      value: "1"
+      value: "<scrubbed: base64 root CA — real value in ~/certs>"
     api::gateway::static::auth::token:
-      value: devsecops_progress
-    api::gateway::tls::selector:
-      default: api::gateway::disabled
-      value: api::gateway::custom
-    cluster_topology:
-      default: hyperconverged-nonha
-    configuration::addons:
+      default: ""
+      value: "<scrubbed: static auth token>"
+    api::gateway::tls::certificate::file:
+      filename: chef360-2.crt
+      value: "<scrubbed: base64 TLS leaf cert — real value in ~/certs>"
+    api::gateway::tls::private::key::file:
+      filename: chef360-2.key
+      value: "<scrubbed: base64 TLS private key — real value in ~/certs>"
+    api::gateway::tls::root::ca::file:
+      filename: chef360_chain.crt
+      value: "<scrubbed: base64 TLS root CA — real value in ~/certs>"
+    api::gateway::tls::tls::verify:
       default: "0"
-      value: "1"
-    configuration::advanced:
-      default: "0"
-      value: "1"
-    configuration::namespace:
-      value: chef-360
-    hab::onprem::isenabled:
-      default: "0"
-      value: "1"
-    log::storage::enable::audit::logs:
-      default: "1"
-    log::storage::enable::general::logs:
-      default: "1"
-    log::storage::minio::audit::logs::retention::period:
-      default: "365"
-      value: "365"
-    log::storage::minio::general::logs::retention::period:
-      default: "30"
-      value: "30"
-    log::storage::s3::audit::logs::bucket: {}
-    log::storage::s3::auto::create:
-      default: "0"
-    log::storage::s3::general::logs::bucket: {}
+      value: "0"
+    api::keycloak::admin::console::password:
+      value: "<scrubbed: Keycloak admin console password>"
+    api::custom::ca::bundle: {}
+    api::opensearch::password:
+      value: "<scrubbed: opensearch admin password>"
+    api::opensearch::username:
+      value: "<scrubbed: opensearch username>"
+    api::rabbitmq::password:
+      value: "<scrubbed: rabbitmq password>"
+    api::rabbitmq::username:
+      value: "<scrubbed: rabbitmq username>"
+    api::signing::ca::cert::secret::key: {}
+    api::signing::key::secret: {}
+    database::password:
+      value: "<scrubbed: embedded-cluster database password>"
+    database::username:
+      value: "<scrubbed: embedded-cluster database username>"
     mailpit::http::nodeport:
       default: "31101"
       value: "31101"
-    opensearch::option:
-      default: opensearch::option::embedded
-    opensearch::option::external::config::hostname: {}
-    opensearch::option::external::config::password:
-      value: +CIHQriarzwcXpjYdBdOCJu7T4Uz0xmFuVC0Mg==
-    opensearch::option::external::config::port:
-      default: "443"
-      value: "443"
-    opensearch::option::external::config::protocol:
-      default: https
-    opensearch::option::external::config::root::ca: {}
-    opensearch::option::external::config::ssl::verify:
-      default: "1"
-    opensearch::option::external::config::username: {}
-    postgresql::option:
-      default: postgresql::option::cnpg
-    postgresql::option::cnpg::backup::enabled:
-      default: "1"
-      value: "0"
-    postgresql::option::cnpg::backup::s3::access_key: {}
-    postgresql::option::cnpg::backup::s3::destination: {}
-    postgresql::option::cnpg::backup::s3::endpoint_ca: {}
-    postgresql::option::cnpg::backup::s3::endpoint_url: {}
-    postgresql::option::cnpg::backup::s3::region:
-      default: us-east-1
-    postgresql::option::cnpg::backup::s3::secret_key:
-      value: 9PPDQfDuaFfbGRU75GDt/NDj/mfZh5/EKFhZTw==
-    postgresql::option::rds::config::master::password: {}
-    postgresql::option::rds::config::master::username: {}
-    postgresql::option::rds::config::reader::endpoint: {}
-    postgresql::option::rds::config::reader::port: {}
-    postgresql::option::rds::config::replica::password: {}
-    postgresql::option::rds::config::replica::username: {}
-    postgresql::option::rds::config::writer::endpoint: {}
-    postgresql::option::rds::config::writer::port: {}
-    preflight::strict::mode:
-      default: "0"
-      value: "1"
-    primary::tenant::direct::access:
-      default: "1"
-      value: "1"
-    primary::tenant::fqdn:
-      value: chef360.demo.lab:31000
-    primary::tenant::name:
-      value: demolab
-    primary::tenant::ou::createDefaultSkillAssembly:
-      default: "1"
-    primary::tenant::ou::description:
-      value: lab org
-    primary::tenant::ou::name:
-      value: lab
-    primary::tenant::subdomain:
-      value: chef360
-    primary::tenant::tld:
-      value: demo.lab
-    progress::chef::eula:
-      default: "0"
-      value: "1"
-    rabbitmq::amqp::nodeport:
-      default: "31050"
-      value: "31050"
+    minio::access::key:
+      value: "<scrubbed: minio access key>"
+    minio::secret::key:
+      value: "<scrubbed: minio secret key>"
+    postgresql::cnpg::backup::s3::secret::key:
+      value: "<scrubbed: cnpg backup S3 secret key>"
     smtp::auth::method:
-      default: plain
-    smtp::host: {}
-    smtp::option:
-      default: smtp::option::real
-      value: smtp::option::mailpit
+      value: plain
+    smtp::bcc: {}
+    smtp::host:
+      value: mailpit
     smtp::password:
-      value: cIXeZR1+A5DhxK+cmJB1rm2m5iXqTq9drtT+3cEMx2q4dAUIeQ==
+      value: "<scrubbed: SMTP password — real value in ~/.secrets>"
     smtp::port:
-      default: "587"
-      value: "587"
-    smtp::retries::enabled:
+      default: "2525"
+      value: "2525"
+    smtp::sender::email:
+      value: "<scrubbed: SMTP sender email>"
+    smtp::tls:
       default: "0"
-    smtp::retries::number:
-      default: "2"
-      value: "2"
-    smtp::senderEmail: {}
-    smtp::server::name:
-      default: Default-SMTP
-      value: Default-SMTP
-    smtp::tls::enable:
-      default: "0"
-    smtp::tls::rootca: {}
-    smtp::tls::skipValidation:
-      default: "0"
-    smtp::username: {}
-    storage::option:
-      default: storage::option::minio
-    storage::option::s3::config::access::key: {}
-    storage::option::s3::config::dsm::bucket: {}
-    storage::option::s3::config::endpoint: {}
-    storage::option::s3::config::region: {}
-    storage::option::s3::config::secret::key: {}
-    temporal::cloud::apiKey:
-      value: 5cMA+mxTKXuV+Igo6FP2q1V0bvbwxEgAJxITbQ==
-    temporal::cloud::server: {}
-    temporal::option:
-      default: temporal::option::onprem
+      value: "0"
+    smtp::username:
+      value: "<scrubbed: SMTP username>"
+    temporal::cloud::api::key:
+      value: "<scrubbed: Temporal cloud API key>"
     tenant::admin::email:
-      value: admin@demo.lab
+      value: "<scrubbed: tenant admin email — real value in ~/.secrets>"
     tenant::admin::name::first:
+      default: chef
       value: chef
     tenant::admin::name::last:
+      default: admin
       value: admin
+    tenant::admin::password:
+      value: "<scrubbed: tenant admin password>"
+    tenant::org::name:
+      default: chef
+      value: chef
+    tenant::subdomain:
+      default: chef360
+      value: chef360
+    tenant::tld:
+      default: demo.lab
+      value: demo.lab
+    temporal::namespace: {}
+    temporal::option:
+      default: temporal::option::onprem
+    topolvm::option:
+      default: topolvm::option::disabled
 status: {}
