@@ -1,5 +1,13 @@
 # Deep Clean TODO
 
+## Required First Step
+
+Before starting any TODO item, fetch the remote refs and verify that the local
+checkout contains the latest repository files. If the current branch is behind
+or has diverged from its upstream, stop and ask the operator whether to sync
+before making changes. Do not pull, rebase, merge, reset, or otherwise sync
+without that approval. Preserve uncommitted local work during this check.
+
 Open items collected from a full audit of `scripts/kvm/`, the rest of `scripts/`,
 the docs tree, CI, and repo conventions (Sep 2026). Each item is independent;
 tackle in order of the priority groups.
