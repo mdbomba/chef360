@@ -9,6 +9,15 @@ authorization codes, downloaded `license.yaml` files, or runtime response files.
 Use checked-in `*.example` files as templates and keep populated copies local.
 The root `.gitignore` excludes common credential and runtime-state paths.
 
+Some versions of `chef-platform-auth-cli get-default-profile` print stored
+access and secret keys. Do not use that command for routine status checks or
+captured diagnostics. Use `list-profile-names` and profile-scoped read commands.
+
+Controller-initiated node enrollment may send an SSH private key or password to
+the Chef 360 enrollment API. Use a temporary request file, avoid logging its
+body, and prefer node-side signed-configuration enrollment when that credential
+transfer is not acceptable.
+
 ## Public Repository Scope
 
 This repository contains public-safe automation, documentation, a versioned

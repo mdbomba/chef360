@@ -3,12 +3,12 @@
 This repository is the project of record for Chef 360 automation, versioned
 public knowledge, and MCP services.
 
-This repository has two purposes: help users install Chef 360 and help users
-understand how to operate Chef 360. It does that by helping people and AI
-clients find guidance, retrieve focused source material, install Chef 360 on a
-prepared Linux guest, and inspect an allowlisted local lab. The MCP services
-are read-only knowledge and inspection interfaces; they do not administer Chef
-360, cloud accounts, or hypervisors.
+This repository installs and validates Chef 360, connects an authenticated
+management workstation, enrolls managed nodes, and supports assisted day-two
+CLI operations. It also helps people and AI clients find guidance and retrieve
+focused source material. The MCP services are read-only knowledge and
+inspection interfaces; authenticated administration is performed separately by
+the checked-in scripts and locally installed CLIs.
 
 ## Start Here
 
@@ -16,12 +16,16 @@ Choose the path that matches your goal:
 
 | Goal | Start with |
 |---|---|
+| Follow the complete install-to-operations lifecycle | Follow `docs/chef360-operations-assistant.md`. |
 | Ask a Chef 360 question | Connect the Python MCP using `config/chef-knowledge-mcp.example.json`, then ask normally. |
 | Understand available MCP sources | Call `get_chef_service_overview`; its default response is intentionally brief. |
+| Register a management workstation | Run `scripts/chef360/register-chef360-workstation.sh` and complete browser authorization. |
 | Install Chef 360 on an existing Linux guest | Run `scripts/chef360/start-install.sh`, then follow `docs/provider-neutral-chef360-installation.md`. |
 | Build the reviewed KVM lab | Follow `docs/kvm-chef360-lab.md` and stop at its pre-Chef review checkpoint. |
 | Provision Azure infrastructure | Follow `docs/azure-two-linux-vms.md`. |
 | Study other infrastructure patterns | Review the imported Terraform references, noting their documented limitations. |
+| Look up exact Chef 360 CLI commands and flags | Search the generated references under `docs/chef360-cli-help/`. |
+| Add a Linux node to Node Management | Run `scripts/chef360/enroll-node-linux-cli.sh` with a reviewed cohort and SSH credential. |
 | Inspect the local KVM lab | Run the TypeScript MCP directly on the lab host. |
 
 The primary MCP workflow is progressive: search first, inspect a short result,
@@ -39,11 +43,12 @@ knowledge set into every conversation.
 
 - `infra/azure/`: two-node Azure infrastructure templates.
 - `scripts/azure/`: paired Bash and PowerShell deployment workflows.
-- `scripts/chef360/`: reusable Chef 360 enrollment and Courier workflows.
+- `scripts/chef360/`: installation, workstation registration, enrollment, and Courier workflows.
 - `scripts/kvm/`: reviewed KVM provisioning, staging, installation, and validation workflow.
 - `chef-360-single-node-terraform-main/`: imported AWS Terraform reference for modular infrastructure and topology patterns.
 - `kots-demo-stand-main/`: imported AWS lab reference for cloud-init and ConfigValues rendering patterns.
 - `knowledge-set/chef360-1.7.3/`: checked-in public Chef 360 documentation set.
+- `docs/chef360-cli-help/`: generated, version-stamped CLI command and option references.
 - `src/chef_knowledge_mcp/`: active Python MCP with public knowledge, allowlisted lab inspection, and an optional protected local overlay.
 - `tests/`: Python MCP tests and stdio smoke verification.
 - `docs/`: public runbooks and implementation notes.

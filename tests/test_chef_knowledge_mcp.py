@@ -67,6 +67,22 @@ class ChefKnowledgeMcpTests(unittest.TestCase):
         self.assertTrue(any(match["id"] == "node-management-enrollment" for match in result["matches"]))
         self.assertTrue(all(not match["path"].startswith("/") for match in result["matches"]))
 
+    def test_public_search_finds_workstation_device_registration(self) -> None:
+        result = self.public_knowledge.search(
+            {"query": "register-device profile-name cafile", "limit": 3}
+        )
+        self.assertTrue(
+            any(match["id"] == "chef-workstation-overview" for match in result["matches"])
+        )
+
+    def test_public_search_finds_node_enrollment_cli_workflow(self) -> None:
+        result = self.public_knowledge.search(
+            {"query": "get-enrollmentId-status approve-node", "limit": 3}
+        )
+        self.assertTrue(
+            any(match["id"] == "node-management-enrollment" for match in result["matches"])
+        )
+
     def test_public_search_finds_provider_neutral_installation(self) -> None:
         result = self.public_knowledge.search(
             {"query": "AWS Azure KVM Hyper-V Proxmox", "limit": 5}

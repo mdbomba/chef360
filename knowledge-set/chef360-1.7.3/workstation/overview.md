@@ -105,6 +105,43 @@ Chef 360 CLIs use Chef Platform authentication profiles rather than the classic
 Chef Infra `config.rb` identity model. Use the references under `../cli/` for
 the project workflow, then verify commands against the installed CLI help.
 
+### Register a Management Workstation
+
+`chef-platform-auth-cli register-device` starts an interactive device
+authorization flow and stores the resulting authentication profile locally:
+
+```bash
+chef-platform-auth-cli register-device \
+  --device-name <WORKSTATION_NAME> \
+  --profile-name <PROFILE_NAME> \
+  --url https://<CHEF360_TENANT_HOST>:31000 \
+  --cafile <TRUSTED_CA_FILE>
+```
+
+Open the URL reported by the command and authorize the device as the intended
+user, tenant, organization, and role. Registration does not create or grant an
+administrative role; the selected identity must already have that role in Chef
+360. Distinct local profiles can preserve distinct tenant or organization role
+contexts.
+
+Verify the selected role and list local profile names without displaying stored
+profile credentials:
+
+```bash
+chef-platform-auth-cli user-account self get-role --profile <PROFILE_NAME>
+chef-platform-auth-cli list-profile-names
+chef-platform-auth-cli set-default-profile <PROFILE_NAME>
+```
+
+Use `--insecure` only in an isolated lab when certificate verification cannot
+be configured. Use `--overwrite` only when intentionally replacing an existing
+local profile. The repository wrapper
+`scripts/chef360/register-chef360-workstation.sh` applies these safeguards and
+loads shared endpoint and profile defaults.
+
+Do not use `chef-platform-auth-cli get-default-profile` as a routine status
+check. Some CLI builds print the stored access key and secret key in plaintext.
+
 Before an automated Chef 360 action:
 
 1. Confirm the intended Chef 360 endpoint and tenant or organization context.
