@@ -26,18 +26,19 @@ Choose the path that matches your goal:
 | Study other infrastructure patterns | Review the imported Terraform references, noting their documented limitations. |
 | Look up exact Chef 360 CLI commands and flags | Search the generated references under `docs/chef360-cli-help/`. |
 | Add a Linux node to Node Management | Run `scripts/chef360/enroll-node-linux-cli.sh` with a reviewed cohort and SSH credential. |
-| Inspect the local KVM lab | Run the TypeScript MCP directly on the lab host. |
+| Inspect the local KVM lab | Run the Python MCP directly on the lab host (`list_lab_machines`, `inspect_lab_machine`, `chef_workstation_versions`). |
 
 The primary MCP workflow is progressive: search first, inspect a short result,
 then retrieve only the relevant document page. It does not load the complete
 knowledge set into every conversation.
 
-## MCP Choices
+## MCP Service
+
+The Python MCP is the single MCP service for this repository.
 
 | Service | Best fit | Sources and capabilities |
 |---|---|---|
-| Python MCP | Primary local knowledge service | Chef 360 1.7.3 public knowledge plus an optional protected Chef CFT overlay |
-| TypeScript MCP | Standalone or hosted public service | Chef 360 1.7.3 knowledge and, when run on the lab host, read-only lab inspection |
+| Python MCP | Primary local knowledge service | Chef 360 1.7.3 public knowledge, read-only allowlisted lab inspection, plus an optional protected Chef CFT overlay |
 
 ## Layout
 

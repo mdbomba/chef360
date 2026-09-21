@@ -140,8 +140,8 @@ sourced at runtime.
       `checklist.md:54`), but the tested KVM lab and `install-chef360.sh:111-112` require XFS
       `ftype=1`. Make XFS `ftype=1` the primary recommendation.
 - [ ] **Pick one node/IP schema** — Chef Automate 10.0.0.21 / node1 .23 / node2 .24
-      (lib + config + project-plan) vs 21_automate/31_node1/32_node2 (mcp-service
-      `src/lib/lab.ts:22-35`, `src/chef_knowledge_mcp/server.py:67-74`,
+      (lib + config + project-plan) vs 21_automate/31_node1/32_node2
+      (`src/chef_knowledge_mcp/server.py:67-74`,
       `knowledge-set/.../lab/topology.md`). Align them or document the lineage.
 - [ ] **Derive `chef360-2.*` cert basename from `VM_SHORT_HOSTNAME`** — the filename is
       hardcoded in `lib:198-202`, `install-chef360.sh:14-15`,
@@ -152,9 +152,6 @@ sourced at runtime.
       update the docs.
 - [ ] **VM_MAC default** — project-plan doc documents `52:54:00:20:00:20`; live build uses
       `52:54:00:1f:c2:eb`. Recompute the documented default from the IP or state it is generated.
-- [ ] **`briefing-room/index.html`** hardcodes `chef360-2.demo.lab`/`10.0.0.40`/`devsecops`
-      pre-filled values (lines 90, 94, 120-133, 144, 148, 179-191); update to
-      `chef360.demo.lab`/`10.0.0.20` and stop pre-filling passwords.
 - [ ] **README typo** — `README.md:78` documents endpoint `https://chef360.example.com:3100`
       (should be `31000`).
 - [ ] **`knowledge-set/.../operations/azure-node-access.md:13-15`** uses personal identifiers
@@ -168,9 +165,6 @@ sourced at runtime.
 - [ ] **Shellcheck all scripts, not just `scripts/kvm`** — extend `scripts/ci` (bash -n +
       `shellcheck -S error`) to `scripts/azure/`, `scripts/chef360/`, `scripts/lib/`,
       `scripts/content/`, `scripts/mcp/`.
-- [ ] **Run the mcp-service TypeScript tests in CI** — `mcp.yml` only runs Python; nothing
-      runs `npm test` / `npm run build` (`mcp-service/package.json:14`,
-      `mcp-service/tests/lab.test.ts`).
 - [ ] **PS1 analysis** — add PSScriptAnalyzer for `scripts/azure/*.ps1`.
 - [ ] **Markdown lint + cross-doc staleness guard** — add markdownlint and a port/hostname/IP
       consistency checker across `docs/**` + `knowledge-set/**` (a typo like `3100` vs `31000`

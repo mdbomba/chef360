@@ -42,7 +42,6 @@ docs/chef-cft-knowledge-guide.md
 config/chef-cft-corpus.json
 AGENTS.md
 azure-government-tags.md
-docs/mcp-service-context.md
 
 # Customer-specific compliance exports and generated indexes
 docs/progress-chef-compliance-content*

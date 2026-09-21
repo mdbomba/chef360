@@ -9,7 +9,6 @@ config/chef-cft-corpus.json
 infra/azure/azure-two-linux-lowcost.parameters.json
 AGENTS.md
 azure-government-tags.md
-docs/mcp-service-context.md
 chef360.vars
 *.pem
 *.key
