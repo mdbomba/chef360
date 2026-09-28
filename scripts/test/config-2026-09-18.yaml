@@ -1,0 +1,198 @@
+apiVersion: kots.io/v1beta1
+kind: ConfigValues
+metadata:
+  name: chef-360
+spec:
+  values:
+    api::gateway::admin::token::isenabled::public:
+      default: "0"
+      value: "1"
+    api::gateway::audit::enable:
+      default: "1"
+    api::gateway::auth::apitoken::isenabled:
+      default: "0"
+      value: "1"
+    api::gateway::body::limit:
+      default: "10"
+      value: "10"
+    api::gateway::cache::enabled:
+      default: "1"
+    api::gateway::certificate::file:
+      filename: chef360.crt
+      value: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVlVENDQW1HZ0F3SUJBZ0lVZTU3SDNjaTVpd0txWjdpenJRV1hrTk00Ymtzd0RRWUpLb1pJaHZjTkFRRUwKQlFBd1ZqRUxNQWtHQTFVRUJoTUNWVk14RURBT0JnTlZCQWdNQjBGeWFYcHZibUV4RERBS0JnTlZCQW9NQTJ4aApZakVOTUFzR0ExVUVDd3dFWkdWdGJ6RVlNQllHQTFVRUF3d1BTVzUwWlhKdFpXUnBZWFJsSUVOQk1CNFhEVEkyCk1EZ3dOakExTWpRME5Gb1hEVEkzTURnd05qQTFNalEwTkZvd1JURVpNQmNHQTFVRUF3d1FZMmhsWmpNMk1DNWsKWlcxdkxteGhZakVOTUFzR0ExVUVDd3dFWkdWdGJ6RU1NQW9HQTFVRUNnd0RiR0ZpTVFzd0NRWURWUVFHRXdKVgpVekNDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DZ2dFQkFNU1dVc3lSczFSZ2xQWGVZR29PClpOZ1RSbDFsS0tHdGt6S0U3OVZDc2VaZlFPS1c0TGRLQkordUJLaGpqeU12bGozSURVSFQ1enJPMlBTc2QyZkUKcElvdE9lUW92RXM4djlERlVWSlZlV2FHU3FiUlRGZSt5LzRYZVF3Tm9mT2U5OUpWWk52T2oxYVRMYmRwQ3BsSgphY2R4WUYySjh4V1d6RmxMUGNWaTJzVVhsNFJjK21BdnNrWEtaYVl4QTRYZXpXSG0wMm9wV1pZZGRoSnZqbDNJCjR5clE4LzIvYS9XVlk5WDlPZHNKaE50QzNPa05SK2R4OW9VbXJ1Y3YxS1hwYmtHTTNBZnc3ZHBoNktZODd0T1oKUUNVTnl6ZjY3eVhtRXhZK0laOFBrVGw1bmhKZTZDRXZTeWlpZHd0Yys5U1F0TDJPNHVQbkRhRkhsMk9XWm9zRwp2NlVDQXdFQUFhTlFNRTR3Q3dZRFZSMFBCQVFEQWdYZ01CTUdBMVVkSlFRTU1Bb0dDQ3NHQVFVRkJ3TUJNQ29HCkExVWRFUVFqTUNHQ0VHTm9aV1l6TmpBdVpHVnRieTVzWVdLQ0IyTm9aV1l6TmpDSEJBb0FBQlF3RFFZSktvWkkKaHZjTkFRRUxCUUFEZ2dJQkFBNGJqYXdzNmgwTGZ3ekxUbnBjTUVhbHlUbTJlcWpWbFlsc0t0NkJINmQrSCtxMQozc1h3c1J4a3NxUXdldkF3SnJpZmdja0lxOUtpVmhLN0Zzako1K3RTVTVTTkhEODNqbVRWZlVKMG1icnhBTFUvCjlnV0xLdjV1RjRPRjJubmhVcUtsRGduSGVGbTZ6amswTjNDT1R4SlBneTNGc1crMGpYL1pTTmxweFNkUWYwZ3UKNUxSZDEvUzVQV1FvT29JSnVKK1VYMU5NSkNrZ05pTVl1bVlCQnMveWZvaWdqSEFEQ2xIZ0wwKytabWxJYytKSApoYklCdnU2T1JTYWovYm1GS2VDZXEzaWFkalRId1d1bW8ydVYwbW9BVFdnREFLRkYzSHFiRFpOSDhvblQybGZtCnplSnYzUjRNcHllb0dENksyb04wNlR3K2NEQkw5bllPMUNCVm93eEJRZDE4RzFTWisxODZLbTlDQlFEM0tCaTQKWmU2SHZWVkY5UlBtUGd1NzFtUHREenNUWEErbTkyQldqMlJmK29PWUtEU3RCZFRzamYvU3dRY0RJcDZEcE9wOQp0Ry9zRjltZjgvakZNNkp4Q2Fqdk1NQlpoYURmVnJmL2EzcjRqdDJzdmlBQzFpQ3d2UDBzQnZ3NWUrbTBwZCtBCkdEaEtzazRXTi84eTJ4a1RpOHlZemtTYjlpSUlOb2tRa3RkdlZwYnprQ1RyMWNpOGs4N2RXMXg2N1NGMS8xMWEKZDFuSEwxRzEwNk82ajhDMGR3SHJ0VGMwQW1INlpBVzlSZlZPMGxHajdXS3lsc0REbER1aHNxWjBXbkJ4cGtBLwpra0xGb1E0RTFKa0FDVEpMVDlnUWNYSnVML1c1NFB2dGdtYmMrbFY2UUk5UG10QmFmcEVHRjNUWS9pZ0cKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+    api::gateway::courier-orchestrator-worker::max-workers:
+      default: "50"
+      value: "50"
+    api::gateway::ingest-worker::min-replicas:
+      default: "1"
+      value: "1"
+    api::gateway::install::admin::token:
+      value: devsecops12345678
+    api::gateway::loglevel:
+      default: info
+    api::gateway::nodemanagement::maximum::checkin:
+      default: "60"
+      value: "60"
+    api::gateway::nodemanagement::minimum::checkin:
+      default: "5"
+      value: "5"
+    api::gateway::nodeport::nginx:
+      default: "31000"
+      value: "31000"
+    api::gateway::private::key::file:
+      filename: chef360.key
+      value: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2QUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktZd2dnU2lBZ0VBQW9JQkFRREVsbExNa2JOVVlKVDEKM21CcURtVFlFMFpkWlNpaHJaTXloTy9WUXJIbVgwRGlsdUMzU2dTZnJnU29ZNDhqTDVZOXlBMUIwK2M2enRqMApySGRueEtTS0xUbmtLTHhMUEwvUXhWRlNWWGxtaGtxbTBVeFh2c3YrRjNrTURhSHpudmZTVldUYnpvOVdreTIzCmFRcVpTV25IY1dCZGlmTVZsc3haU3ozRll0ckZGNWVFWFBwZ0w3SkZ5bVdtTVFPRjNzMWg1dE5xS1ZtV0hYWVMKYjQ1ZHlPTXEwUFA5djJ2MWxXUFYvVG5iQ1lUYlF0enBEVWZuY2ZhRkpxN25MOVNsNlc1QmpOd0g4TzNhWWVpbQpQTzdUbVVBbERjczMrdThsNWhNV1BpR2ZENUU1ZVo0U1h1Z2hMMHNvb25jTFhQdlVrTFM5anVMajV3MmhSNWRqCmxtYUxCcitsQWdNQkFBRUNnZ0VBRmI2TzRBUEpzeTZQcTNaeWNhaXY3TnFNOE8yc2hkMmVKM3RlejliMXVJYVcKdGJsOGw2bC9RMjVMSTVrSGp4dkhZWVFNTzFqRi9kSTlXeXJzZGpUaEFrdW9XSjFNM29HVXNmSHhZY3NFaDV1WgpERVNnVGlCVGpnSm9xRFdsMFQybktjTzZTVG5henZldW1kZnJqVEw2bVUzb0c5Q1RhN0xuWFlVZUN3UTVNSTJPCjJpS0txek9QRWtIeWtuWTFrMzV6dlVWVTVWR1hlQWVNQjdFcDlTU2lLWDZIak1ha0ZnbndEb3UzU2p1Mm5KV0sKbFBVS1BkSGxNN3dRK0JFdTI4cUNpd2dYTVQ3djFzR1Q0N09FY0J3R0JOMThORTJnK2RXUjVjNU1OWkdMWjBtVQpQMWNSWjlUdFM5U3BoNGxWdGJjRVpFSmhvRHhsU1dyNHZsMDlxQ1l1b1FLQmdRRGpKZ3hHSEF4UGozcnp5aEdnCktOSW5HWmtHQ3dOY1lSUTRUTnhYdHhsMVVtcVZQMjRybDhXWkdlRE54dUIyZXBaTy9SMWg0YVN0NEF2MXBZT3MKOHhKMnB1dXd1dmZWcnVTRUxtY3hpZGVWOXc1MjJXeWlaRjJsYmNBNzZ2bWhrSFJzelRpWmlwdU1rZkRUTnBiUwpIRHF0dGdTTHZmRzlGK010eTdZUldIb2F6UUtCZ1FEZGpvcTc1MEJNazNRYnBCWEg4NkhyTVRTTHhMS2ZMUmJ4CkJmdXdNZnVnNkJjNkpXVlF1b3h4UTZpcUtpbGhKVi9ZQjlsM1lwSDBFL3dVbkw2N3hyV01GZHQzZHJZSEg1dnoKMzVPZjJURE1GaEk0ZzF3MmhyL0cyZVFRVEYrajJDcXRwelYzV0hJbnV3amtJaFY0NVNBWTdLeHNkUFVucGZQLwptYmFXNThIb09RS0JnRVBORlpqUHduVDFGUFF6K3JMZHZHempYU1BLb2NRdlRnUElIWFVwT0RZbTFaMmJBMTJMCnZmV0hIZTBPVWUzTGhaWXFRMXoySjF1bkpxcTZMdVd1NEhIK1BSZlJseXgzT2NxaXR6YTRPRnVSRlFZd3ZCWjAKOHVid0xaTTAvakpWbGdycjd0c1YzbnhGQzZkZ0FnRFJZRXA5ckRteUJyZzBxeUQrVDJnNkNxaDVBb0dBS2tjNwpIaVJBMXR3RWVnblR4all0bmMzajh3L3o3Z0FTc3Flcm9iSElES3A5VkRFeXBqY1MrY0lwZTE5VVNoOXhySzNDCng4OWRmckFabUcxWTBFaFkrSVJyUHQ2K1dabWtqdU1KTHFXcGRDaDZEYUt6aEF3dXFHbUg1YnhOTzl6U09CVUMKVk9YaDBzY1VLVVIveUhRZ3JlRHIvajVMVWVlUEtpVlEvSGI1UDdFQ2dZQWlKd0ladXZHQUNlZG1yUDJKZ1BzVAozTm1sWnZ0VW1xUW5PSkpSN3VmTlhkZW9BREhvL2FWdlhYbHgzQ3JNL0hBNURzbEROVUhOTkszczJjUndvUkoyCkRPRzRTRHduV094U3AwS0xESjZDWS9jRVpRdnQrbHBaRU1oT3dKcWdBTG1HdE5CODJyQlpZSjBOclZ6aVM5b0YKL2I4bjQzMUdDa3p4ZDcwVjN3U3NnZz09Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
+    api::gateway::private::key::signer: {}
+    api::gateway::public::key::expiry:
+      default: "1924905600"
+      value: "1924905600"
+    api::gateway::public::key::signer: {}
+    api::gateway::root::cert::file:
+      filename: chef360_chain.crt
+      value: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUZtakNDQTRLZ0F3SUJBZ0lDRUFBd0RRWUpLb1pJaHZjTkFRRUxCUUF3WWpFTE1Ba0dBMVVFQmhNQ1ZWTXgKRURBT0JnTlZCQWdNQjBGeWFYcHZibUV4RWpBUUJnTlZCQWNNQ1ZSdmJXSnpkRzl1WlRFTU1Bb0dBMVVFQ2d3RApiR0ZpTVEwd0N3WURWUVFMREFSa1pXMXZNUkF3RGdZRFZRUUREQWRTYjI5MElFTkJNQjRYRFRJMk1EUXlNREUzCk1EWXlOMW9YRFRNMk1EUXhOekUzTURZeU4xb3dWakVMTUFrR0ExVUVCaE1DVlZNeEVEQU9CZ05WQkFnTUIwRnkKYVhwdmJtRXhEREFLQmdOVkJBb01BMnhoWWpFTk1Bc0dBMVVFQ3d3RVpHVnRiekVZTUJZR0ExVUVBd3dQU1c1MApaWEp0WldScFlYUmxJRU5CTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUFyRXVDCmNPSFhsMU9oWVVtbWovQzN1QjdUYWNmV2FnYnVlSXE4YkJlM2svY05XM1daVithWmo3MmtHV1QwM2RLRlN5YVIKSGhJWTBnQnBKU1NDd0V4ZWgwSklXZ3FtVE02ZW1zdE9OaG1LU3daUmRCK0NKbnh1TmJMOTg3UzUxNytzcjh0YgovbzFPeWlDWWlzV25VTU9ReGhNWU9KM01tUHJLMG55SDJ3K0JSaGpmNGpkUzNSaWpPclZRNEpPMlR1bXpIcDVRCjRuak8wdzJuNm9PVnRwL081Zi9QRlZBNENtbEtQWVZyK0MvcHVmWXZjcDRscnlzWjNURWwxWEd2eGdjTXVxemMKeTdjcVFYVTI1MnlpN0RRMVA4THRIUzBBbUdzNXhMYTJVRkpnZmRJOTE0ZDBjM3pmZ25aV1BSM0Viclpnalh2YQpXWVFYcTE3UVpGcitibVZhNVNMU1lIOUVQSWhabXA4QURDZ2hwNlZNV2FONG93VDJXdmhtYng1MjVPS25MMnZBCmJkc09UQ3ExNnBKS3NWa01Gc3lkNGJHYk5Ka2R2N1hDdnlkN1pPUldCN2ozc1g5Qy84Wi9Xb0xPejVvdm03TFUKU3ZDdUlRcTJ6b1g2bENuM0hFYzYzWjNUSzFWS3oyODJlMkVZS1hpb210bWhuUzRwY0ZYQkhCblJCSmVadW40VgpMSFhhOGcycnZ1OTV5UEhRanV4Y0tiaVBPazNVVjkxekpraDJmZmYyU3EraUVCRDc5WDJudElaYmp5R0dDOEtuCmFJd3Q5S2xYakJpeUc2b2FKZTBBM05hUU5CYWg1QWcydXFKSDlzUkdrMUJ0c0xuNmtCU1lnd0lGL2R1cVJMVjYKSGRlOTBiNlhUaXk4Y2oxSXdMSlJ6TXUxWkUzSWFNOVFiZE5JY0drQ0F3RUFBYU5tTUdRd0hRWURWUjBPQkJZRQpGUC9obGhKUkl3TDV5eVVSZWI5N1hpNUJ6Sjc1TUI4R0ExVWRJd1FZTUJhQUZJT1JWd1RtZlFxZkxabmZEcDZTClp3SUpxZ1JMTUJJR0ExVWRFd0VCL3dRSU1BWUJBZjhDQVFBd0RnWURWUjBQQVFIL0JBUURBZ0dHTUEwR0NTcUcKU0liM0RRRUJDd1VBQTRJQ0FRQlJoaG9JQXpxNzF6aUNpVVRjOHBld2ZTWXBMWXFodWw2bHdhdlNMQ1l3eWFjNQpQck1DbVRiVktvY2RKZTZDTlBTY1BvNVV1bHpiR0F1MGIrTEwyV09nMVdXUTZ4VXlUZWE4TitxanR2MXVvckhYCkJHdkpvYVhlREFJQVlxQnJmTzR2cnA0VWlFakNZejh1NlBTbmt1QU0vR2xiRC95cGlNaTNFaFdzWHIyU2xobE4KUDZDa1JnVnVwcGVTQ1VuNHkwYUFUUWgyandSZzY0ajh0TUtKdTJkdVh2a2xHTUNQOUpkZnZsQnhnUWlnUUZFTwpMS01LNGJ0OHJpNUxWWVhxWEJhdHpKTE1QZlJtbjA4a25KUDBKMmJyM1RNcVdDbVZrcDF5Ky9HVGhvL05mYTJHCmV6LzFEeUJmLytnNUpmM2JhT1NUUDBodFBqNHQ5SEF4V25XRndaS3F4NmtkLzJTUHpWL0pJb04yZHNFMm5rVUoKdzNNUmRQczljQUR2U3ZYaDdjS2pzamlVUzVCclIwWUEyanJnbVE3YWV0TTVMaGp4Rk95RXI0Ylh1TXc0emdEUAo4UnVQVjBHMlorbEVTSDB4QTIwR3VkcmNUTkNqUlgxQmtFajd5SzIwdC9PRG5PMHlTN2RBL2lURERERmZ3UFdoClV5ZWJYWTRMR29aVi9ST2JaamI4UG0zUk04MzVMMEpiM3M3SWdYcFlSc2ZJVlhSc29RS2ZmZmwrblVFRkljd1AKUzhIUjRVemN2Zi85NUY2M0ZVRVU0dzAzSTI3aUEyMUQ3QjN6a29xVjNLSEdPa0xGeHFiVHZNUUczYnFJSVF5RgovT05HNlBqelhxTWgvaG5sZFlSTkF2cC9hTnFsVWVVajhneFUxL2hQdS9JckI2VWxFYnkwSGdLdmM1Q1BSZz09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0KLS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUZ0VENDQTUyZ0F3SUJBZ0lVUTQ1bnZJOHBBV293WmRpY1FNVkE2QVUwOWxrd0RRWUpLb1pJaHZjTkFRRUwKQlFBd1lqRUxNQWtHQTFVRUJoTUNWVk14RURBT0JnTlZCQWdNQjBGeWFYcHZibUV4RWpBUUJnTlZCQWNNQ1ZSdgpiV0p6ZEc5dVpURU1NQW9HQTFVRUNnd0RiR0ZpTVEwd0N3WURWUVFMREFSa1pXMXZNUkF3RGdZRFZRUUREQWRTCmIyOTBJRU5CTUI0WERUSTJNRFF5TURFM01EWXlNbG9YRFRRMk1EUXhOVEUzTURZeU1sb3dZakVMTUFrR0ExVUUKQmhNQ1ZWTXhFREFPQmdOVkJBZ01CMEZ5YVhwdmJtRXhFakFRQmdOVkJBY01DVlJ2YldKemRHOXVaVEVNTUFvRwpBMVVFQ2d3RGJHRmlNUTB3Q3dZRFZRUUxEQVJrWlcxdk1SQXdEZ1lEVlFRRERBZFNiMjkwSUVOQk1JSUNJakFOCkJna3Foa2lHOXcwQkFRRUZBQU9DQWc4QU1JSUNDZ0tDQWdFQTFKdXZ6VXN3c3FnSHdPdnE0Tjlnc3VibVdRM00KNWJJUnh3RkR2UHJXTVFGTzdrS21pbXVVaVJuYTVtc2VnQTJETklSWEdNb0UwcG1GajRPVlVhdVp1Ym9GTXFQdApPRzVDbFRjR3pscWk0RVpqUXo2allnVlRmN29LM2szYnpxZzlYd1Z6VGNKMjUvLzFPR0tHYktieVM1SXlzZE96CkhVYzdsYjNadEt2d3VuK1FVSWVGdUkyYVdnVmtKSllKQUY2c0VjZXN4aExTSU1zbHM3UlZXQWY2RzVzS2dPR2UKaGtLQ3hOcFdTNjE0d2tiVUpLRVB3dHpFT0FEN1BwUHNYRG5WZjQ1QkQ0ZHZ6bEdTaWZ5SGtsMDJOb1FpaUdGOQpyYVhpcjZLN2tvN2ovb3d3bUkvQm1vcjlnSGlvTU1OR01QSDd6NWhLTXBwczJHTm5lNEhXUmV2UlF4L0MxN3pGCmNhOXFKbklpaVRDTzh4OWg5Qk1FVEFJcjlqSVRac0xhL1NPcWdnOEphamFqbHF3Q253b3FBRFBoQjV5clA3dmYKZlVXSlZlSXBqWTJBTkRZNWpPUGFXU1ZJTXV0UjI2SWFkOW9qY1pFV0xtYThkL1MzTmtzZ1V1Y1ljWkM4aEdrZAppVkllU1R0WVhxRDdZT3ovcEc1T1B0RjBsNEJWK0FqOHFhUURMcklRckZjQ1M3Q1EwaitZTnR3Uzg4UmFHNEMxCnpKcWpHMWJWc0Y5eWlRS29xYVRFQmROeUg4RHhIT3VmcWFVTXF5ZEtuM1l2ZmlzM0xRRElIOS9ndG9hVVNlWXYKYTNqNEwxQ0xuazhRQ1p4b2JVbWZyRGtNZ0NQMHRLc0ovQm9WRXFkOS9aU1g1VEREZVlVaHBYVGprSkdJMmpFegpzeXd1eVU2OEJ0TmhLRzhDQXdFQUFhTmpNR0V3SFFZRFZSME9CQllFRklPUlZ3VG1mUXFmTFpuZkRwNlNad0lKCnFnUkxNQjhHQTFVZEl3UVlNQmFBRklPUlZ3VG1mUXFmTFpuZkRwNlNad0lKcWdSTE1BOEdBMVVkRXdFQi93UUYKTUFNQkFmOHdEZ1lEVlIwUEFRSC9CQVFEQWdFR01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQ0FRQ1FPc3ZZbUhzNQpLYVJoQUxOQXYxWUxOak5zaDBZcUx3MEhLcFFCRnRETmtxZFFqU1dIMGU0OTd6d0VOMWdNbXJ3SnUzVWdKKzNsCkUrSGsyZ3BhdE95dk5IcVRRTUhvbW5DZEd2NnllNVozU0hQQUF5NnJuWUFIeVF1eGY2ZGRWWkd2OGQ3Z1lrejUKcGR4TGxsaG50YVhjcHJIUSszck9VNjB0QVM5RTBycGR5SEgxY0tlM0VhUU04MGV2dUxRT3Z2b21pRUM2WVFWTgpYekorTkJFdG54alJaeG1YQXpFUm9sVGxobTY2NTNkOG1aL1NCQ2c3TUViV2l4c1EwMGMyNy9sNnlkc0hsSVFECmVHcVpVeTc0dE9BREYreHJrdStTbTA4a0JFbzA2YmdpRGtUYmE3R1RFSWhjcXFFZ0VLR29BVFNvYWlCRklmTFYKNlp0MU9jcmMzTzMzUjJQVnJkU0tVT1BJbjVwWTVBbGMrdWVpWHhuaWczNy9zUTdtb05lQm84Y1d4ekw5V1ArSgpMWVQxYW5zUzdsM3J4d0crWURTMHZUNEY2QU9XS3JCTTV5YTV1dFZhYmlEdFMybVEzS0FUTnlBaWxHbWU0bVJrCjRHN1gzS3ZmWVNCL2dsM3h3RCtrd09neDNiWE90RjVPdG04cGZqYWJIMVIwcUt1b2JBNXJNZEtZbkVzK04xRSsKMXNJbjdYVnpQYmhuZWM2Y2FVMHVWcUlNM0hGZGFzb1NuUTZQbTB2a29GYjAvTDNPcVhGaXRRSXd5UWVESFRYSQpRMWdJMzhCZDRQZFZyTnZIU01pK2Z2ZnFmNitpYmVZZExxMGs4aTBtM3NkeDVhalVmY0FFMXRSWlM5eU1EcWtTCmVhWXYvK0wrSUxIT0hRZS9ReWJ4R0h4ajNJcFVpOHdRTGc9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    api::gateway::skip::cert::validation:
+      default: "0"
+      value: "0"
+    api::gateway::static::auth::token:
+      value: devsecops12345678
+    api::gateway::tls::selector:
+      default: api::gateway::disabled
+      value: api::gateway::custom
+    cluster_topology:
+      default: hyperconverged-nonha
+      value: hyperconverged-nonha
+    configuration::addons:
+      default: "0"
+      value: "1"
+    configuration::advanced:
+      default: "0"
+      value: "1"
+    configuration::namespace:
+      value: chef-360
+    hab::onprem::isenabled:
+      default: "0"
+      value: "1"
+    log::storage::enable::audit::logs:
+      default: "1"
+    log::storage::enable::general::logs:
+      default: "1"
+    log::storage::minio::audit::logs::retention::period:
+      default: "365"
+      value: "365"
+    log::storage::minio::general::logs::retention::period:
+      default: "30"
+      value: "30"
+    log::storage::s3::audit::logs::bucket: {}
+    log::storage::s3::auto::create:
+      default: "0"
+    log::storage::s3::general::logs::bucket: {}
+    mailpit::http::nodeport:
+      default: "31101"
+      value: "31101"
+    opensearch::option:
+      default: opensearch::option::embedded
+      value: opensearch::option::embedded
+    opensearch::option::external::config::hostname: {}
+    opensearch::option::external::config::password: {}
+    opensearch::option::external::config::port:
+      default: "443"
+      value: "443"
+    opensearch::option::external::config::protocol:
+      default: https
+    opensearch::option::external::config::root::ca: {}
+    opensearch::option::external::config::ssl::verify:
+      default: "1"
+    opensearch::option::external::config::username: {}
+    postgresql::option:
+      default: postgresql::option::cnpg
+      value: postgresql::option::cnpg
+    postgresql::option::cnpg::backup::enabled:
+      default: "1"
+      value: "0"
+    postgresql::option::cnpg::backup::s3::access_key: {}
+    postgresql::option::cnpg::backup::s3::destination: {}
+    postgresql::option::cnpg::backup::s3::endpoint_ca: {}
+    postgresql::option::cnpg::backup::s3::endpoint_url: {}
+    postgresql::option::cnpg::backup::s3::region:
+      default: us-east-1
+    postgresql::option::cnpg::backup::s3::secret_key: {}
+    postgresql::option::rds::config::master::password: {}
+    postgresql::option::rds::config::master::username: {}
+    postgresql::option::rds::config::reader::endpoint: {}
+    postgresql::option::rds::config::reader::port: {}
+    postgresql::option::rds::config::replica::password: {}
+    postgresql::option::rds::config::replica::username: {}
+    postgresql::option::rds::config::writer::endpoint: {}
+    postgresql::option::rds::config::writer::port: {}
+    preflight::strict::mode:
+      default: "0"
+      value: "0"
+    primary::tenant::direct::access:
+      default: "1"
+      value: "1"
+    primary::tenant::fqdn:
+      value: chef360.demo.lab:31000
+    primary::tenant::name:
+      value: demolab
+    primary::tenant::ou::createDefaultSkillAssembly:
+      default: "1"
+      value: "1"
+    primary::tenant::ou::description:
+      value: Lab organization
+    primary::tenant::ou::name:
+      value: lab
+    primary::tenant::subdomain:
+      value: chef360
+    primary::tenant::tld:
+      value: demo.lab
+    progress::chef::eula:
+      default: "0"
+      value: "1"
+    rabbitmq::amqp::nodeport:
+      default: "31050"
+      value: "31050"
+    smtp::auth::method:
+      default: plain
+    smtp::host: {}
+    smtp::option:
+      default: smtp::option::real
+      value: smtp::option::mailpit
+    smtp::password: {}
+    smtp::port:
+      default: "587"
+      value: "587"
+    smtp::retries::enabled:
+      default: "0"
+    smtp::retries::number:
+      default: "2"
+      value: "2"
+    smtp::senderEmail: {}
+    smtp::server::name:
+      default: Default-SMTP
+      value: Default-SMTP
+    smtp::tls::enable:
+      default: "0"
+    smtp::tls::rootca: {}
+    smtp::tls::skipValidation:
+      default: "0"
+    smtp::username: {}
+    storage::option:
+      default: storage::option::minio
+      value: storage::option::minio
+    storage::option::s3::config::access::key: {}
+    storage::option::s3::config::dsm::bucket: {}
+    storage::option::s3::config::endpoint: {}
+    storage::option::s3::config::region: {}
+    storage::option::s3::config::secret::key: {}
+    temporal::cloud::apiKey: {}
+    temporal::cloud::server: {}
+    temporal::option:
+      default: temporal::option::onprem
+      value: temporal::option::onprem
+    tenant::admin::email:
+      value: admin@demo.lab
+    tenant::admin::name::first:
+      value: Chef
+    tenant::admin::name::last:
+      value: Admin
+ status: {}
