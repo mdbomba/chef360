@@ -1,0 +1,14 @@
+schema_version: 1
+config_file: config-2026-09-18.yaml
+created_at: 2026-09-18
+status: unverified
+description: Basic Chef 360 installation configuration with embedded MinIO as the default platform object store.
+storage:
+  application_storage: embedded-minio
+  postgresql_backup: minio-or-s3-compatible
+  disaster_recovery: minio-or-s3-compatible
+  generated_logs: minio-or-s3-compatible
+  audit_logs: minio-or-s3-compatible
+notes:
+  - Baseline configuration before external S3-compatible storage is configured for all services and logs.
+  - Do not overwrite this snapshot; export a new timestamped configuration for every configuration change.
