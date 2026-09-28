@@ -146,7 +146,7 @@ if [[ "${INTERACTIVE}" == true ]]; then
   printf '\n' >&2
 
   # Interactive input may have changed VM_NAME; recompute derived paths.
-  KVM_WORK_DIR="${PROJECT_ROOT}/.kvm/${VM_NAME}"
+  KVM_WORK_DIR="${KVM_TMP_ROOT}/${VM_NAME}"
   if [[ "${PLAN_OVERRIDE}" == "1" && "${PLAN_OVERRIDE_VALUE}" != "/dev/null" ]]; then
     PLAN_TARGET="${PLAN_OVERRIDE_VALUE}"
   else

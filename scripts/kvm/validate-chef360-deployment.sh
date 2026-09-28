@@ -312,8 +312,8 @@ printf '\nChef 360 deployment validation passed.\n'
 # delete.
 #
 # What is removed on confirmation:
-#   - ${KVM_WORK_DIR}    (${PROJECT_ROOT}/.kvm/${VM_NAME})  build work dir
-#   - ${KVM_STATE_FILE}  (${PROJECT_ROOT}/config/kvm-chef360.env)  state file
+#   - ${KVM_WORK_DIR}    (${KVM_TMP_ROOT}/${VM_NAME})  build work dir
+#   - ${KVM_STATE_FILE}  (${KVM_TMP_ROOT}/kvm-chef360.env)  state file
 #
 # What is kept: the VM, its OS/data disks, the guest, and the per-build TLS
 # material under ~/certs. The disks live in the libvirt image directory, not

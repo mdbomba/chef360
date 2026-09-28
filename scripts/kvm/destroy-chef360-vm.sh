@@ -21,7 +21,7 @@ done
 for artifact in "${LIBVIRT_SEED_ISO}" "${LIBVIRT_INSTALL_KERNEL}" "${LIBVIRT_INSTALL_INITRD}"; do
   [[ "${artifact}" == "${LIBVIRT_IMAGE_DIR}/${VM_NAME}-"* ]] || fail "Refusing unsafe artifact path: ${artifact}"
 done
-[[ "${KVM_WORK_DIR}" == "${PROJECT_ROOT}/.kvm/${VM_NAME}" ]] || fail "Refusing unsafe work directory: ${KVM_WORK_DIR}"
+[[ "${KVM_WORK_DIR}" == "${KVM_TMP_ROOT}/${VM_NAME}" ]] || fail "Refusing unsafe work directory: ${KVM_WORK_DIR}"
 
 if [[ "${AUTO_YES}" != true ]]; then
   printf 'This will delete VM %s and these dedicated resources:\n  %s\n  %s\n  %s\n' \
