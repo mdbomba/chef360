@@ -25,7 +25,7 @@ SOURCE_ENV_CHEF360_ROOT_CA="${CHEF360_ROOT_CA+x}"; SOURCE_ENV_CHEF360_ROOT_CA_VA
   SOURCE_ENV_DATA_DISK="${DATA_DISK+x}"
   SOURCE_ENV_KVM_WORK_DIR="${KVM_WORK_DIR+x}"
   SOURCE_ENV_VM_NAME="${VM_NAME+x}";          SOURCE_ENV_VM_NAME_VALUE="${VM_NAME-}"
-  SOURCE_ENV_VM_HOST_IP="${VM_HOST_IP+x}";    SOURCE_ENV_VM_HOST_IP_VALUE="${VM_HOST_IP-}"
+  SOURCE_ENV_KVM_HOST_IP="${KVM_HOST_IP+x}";  SOURCE_ENV_KVM_HOST_IP_VALUE="${KVM_HOST_IP-}"
 SOURCE_ENV_SEED_ISO="${SEED_ISO+x}"
 SOURCE_ENV_INSTALL_KERNEL="${INSTALL_KERNEL+x}"
 SOURCE_ENV_INSTALL_INITRD="${INSTALL_INITRD+x}"
@@ -65,21 +65,25 @@ fi
 [[ -z "${SOURCE_ENV_CHEF360_ROOT_CA}" ]] || CHEF360_ROOT_CA="${SOURCE_ENV_CHEF360_ROOT_CA_VALUE}"
 # Same for the VM identity the params file may have set above.
 [[ -z "${SOURCE_ENV_VM_NAME}" ]] || VM_NAME="${SOURCE_ENV_VM_NAME_VALUE}"
-[[ -z "${SOURCE_ENV_VM_HOST_IP}" ]] || VM_HOST_IP="${SOURCE_ENV_VM_HOST_IP_VALUE}"
+[[ -z "${SOURCE_ENV_KVM_HOST_IP}" ]] || KVM_HOST_IP="${SOURCE_ENV_KVM_HOST_IP_VALUE}"
 
 # Optional local source cache. When set to a directory that already contains the
 # matching artifact, builds prefer it over the default /install paths. Set
 # KVM_SOURCE_DIR to point at a maintained cache such as ~/repos/sources.
 KVM_SOURCE_DIR="${KVM_SOURCE_DIR:-}"
 
-VM_NAME="${VM_NAME:-20_chef360}"
+# Use :- only where an empty value is meaningless. VM_NAME, KVM_HOST_IP, and the
+# derived identity below must not fall back to a default when a params file sets
+# them blank: a placeholder params file would otherwise silently resolve to this
+# repo's original 20_chef360 lab and target the wrong appliance.
+VM_NAME="${VM_NAME-20_chef360}"
 VM_HOSTNAME="${VM_HOSTNAME:-chef360.demo.lab}"
 VM_SHORT_HOSTNAME="${VM_SHORT_HOSTNAME:-chef360}"
 VM_IP="${VM_IP:-10.0.0.20}"
 VM_PREFIX="${VM_PREFIX:-24}"
 VM_GATEWAY="${VM_GATEWAY:-10.0.0.2}"
 VM_DNS="${VM_DNS:-10.0.0.1}"
-KVM_HOST_IP="${KVM_HOST_IP:-10.0.0.1}"
+KVM_HOST_IP="${KVM_HOST_IP-10.0.0.1}"
 KVM_HOST_FQDN="${KVM_HOST_FQDN:-fury.demo.lab}"
 AUTOMATE_IP="${AUTOMATE_IP:-10.0.0.21}"
 AUTOMATE_FQDN="${AUTOMATE_FQDN:-automate.demo.lab}"
