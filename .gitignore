@@ -9,6 +9,7 @@ chef360.vars
 config/chef360.parameters.env
 config/azure-two-linux.env
 config/kvm-chef360.env
+config/demo-lab.env
 infra/azure/azure-two-linux-lowcost.parameters.json
 *.pem
 *.key
@@ -37,6 +38,7 @@ courier-runner-key.pem
 
 # Protected local Chef CFT knowledge and host context
 data/
+knowledge-set/chef360-1.7.3/lab/*podlist*
 docs/chef-cft-metadata-index.*
 docs/chef-cft-knowledge-guide.md
 config/chef-cft-corpus.json
