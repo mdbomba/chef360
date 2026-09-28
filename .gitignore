@@ -20,6 +20,10 @@ infra/azure/azure-two-linux-lowcost.parameters.json
 /chef-360.airgap
 /chef-360-*.tgz
 /license.yaml
+/scripts/test/*
+!/scripts/test/config.yaml
+!/scripts/test/config-*.yaml
+!/scripts/test/WORKFLOW.md
 /.chef360-install/
 
 # Generated Chef 360 request/response files
