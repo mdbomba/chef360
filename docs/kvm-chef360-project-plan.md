@@ -170,7 +170,7 @@ ConfigValues. Replace these paths if a build needs different certs.
 | CHEF360_LICENSE_SOURCE | License YAML validated before install | `~/install/chef/chef-360/1.7/license.yaml` | |
 | CHEF360_CONFIG_TEMPLATE | ConfigValues template the generator starts from | `knowledge-set/chef360-1.7.3/examples/kots-config.yaml` | |
 | App version | Locked by the pinned installer bundle | `1.7.3` | |
-| CHEF360_ADMIN_CONSOLE_PASSWORD | Initial Admin Console password (min 6 chars) | `devsecops` | |
+| CHEF360_ADMIN_CONSOLE_PASSWORD | Initial Admin Console password (min 6 chars); read from secrets or prompted silently during install | - | |
 
 ### 6. Tenant and endpoint configuration
 
