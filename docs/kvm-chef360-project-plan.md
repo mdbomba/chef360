@@ -1,7 +1,7 @@
 # KVM Chef 360 Project Plan
 
 Every Chef 360 build starts from an approved plan. The plan is a per-build
-artifact (`.kvm/<VM_NAME>/<VM_NAME>-PLAN.md` plus machine-readable
+artifact (`~/repos/.tmp/chef360/<VM_NAME>/<VM_NAME>-PLAN.md` plus machine-readable
 `<VM_NAME>-PLAN.env`) generated interactively with the operator, reviewed, and
 approved **before** any VM or install step runs. It is the single source of
 truth that drives the VM build, the Chef 360 install, and the generated
@@ -10,20 +10,27 @@ truth that drives the VM build, the Chef 360 install, and the generated
 ## Naming convention
 
 All project-specific content created for a build is prefixed with the target
-VM name (e.g. `20_chef360`). This keeps simultaneous or successive builds
-collision-free on the KVM host and makes ownership self-describing.
+VM name (e.g. `20_chef360`). Build artifacts and the generated project params
+snapshot are kept under `~/repos/.tmp/chef360/`, outside the checkout. The
+build reads `~/.secrets/chef360.params` first, prompts for missing required
+values, and writes the resolved values to
+`~/repos/.tmp/chef360/chef360.params` with mode `0600`. The project snapshot
+supplies values missing or blank in the secrets file, while non-empty secrets
+refresh the snapshot on each run. Explicit environment overrides remain highest
+priority. Password prompts are silent, and the generated params file includes
+the resolved settings needed by later build scripts.
 
 | Artifact | Example name |
 |---|---|
-| Build work directory | `.kvm/20_chef360/` |
-| Plan (machine + human) | `.kvm/20_chef360/20_chef360-PLAN.env`, `20_chef360-PLAN.md` |
-| ConfigValues + secrets | `.kvm/20_chef360/20_chef360-config.yaml`, `20_chef360-secrets.env` |
-| Autoinstall files | `.kvm/20_chef360/20_chef360-user-data`, `20_chef360-meta-data`, `20_chef360-vmlinuz`, `20_chef360-initrd`, `20_chef360-seed.iso` |
+| Build work directory | `~/repos/.tmp/chef360/20_chef360/` |
+| Plan (machine + human) | `~/repos/.tmp/chef360/20_chef360/20_chef360-PLAN.env`, `20_chef360-PLAN.md` |
+| ConfigValues + secrets | `~/repos/.tmp/chef360/20_chef360/20_chef360-config.yaml`, `20_chef360-secrets.env` |
+| Autoinstall files | `~/repos/.tmp/chef360/20_chef360/20_chef360-user-data`, `20_chef360-meta-data`, `20_chef360-vmlinuz`, `20_chef360-initrd`, `20_chef360-seed.iso` |
 | Disks | `/var/lib/libvirt/images/20_chef360-os.qcow2`, `20_chef360-data.qcow2` |
 | TLS/CA material | `~/certs/20_chef360.crt`, `20_chef360.key`, `20_chef360_chain.crt`, `20_chef360_ica.crt`, `20_chef360_rca.crt` |
-| CA workspace | `.kvm/20_chef360/20_chef360-ca/` (`20_chef360-rca.key`, `20_chef360-ica.key`, ...) |
-| Staging tree | `.kvm/20_chef360/20_chef360-stage/` (`chef-360`, `license.yaml`, `20_chef360-config.yaml`, `tls/20_chef360.*`, `ca/20_chef360-ica.crt`) |
-| Staging manifest | `.kvm/20_chef360/20_chef360-stage/20_chef360-MANIFEST.txt` |
+| CA workspace | `~/repos/.tmp/chef360/20_chef360/20_chef360-ca/` (`20_chef360-rca.key`, `20_chef360-ica.key`, ...) |
+| Staging tree | `~/repos/.tmp/chef360/20_chef360/20_chef360-stage/` (`chef-360`, `license.yaml`, `20_chef360-config.yaml`, `tls/20_chef360.*`, `ca/20_chef360-ica.crt`) |
+| Staging manifest | `~/repos/.tmp/chef360/20_chef360/20_chef360-stage/20_chef360-MANIFEST.txt` |
 
 For `os_iso` and `clone` builds the disk, CA, and staging paths follow the
 convention above exactly. For `existing` builds (a VM built outside this
@@ -46,7 +53,7 @@ inherently isolated and product-conventional names stay stable across builds.
    `VM_NAME=20_chef360 VM_HOSTNAME=chef360.demo.lab TENANT_ADMIN_EMAIL=admin@demo.lab \
    scripts/kvm/create-chef360-plan.sh`. Repeat the dry-run until it passes.
 3. **Approve** — run `scripts/kvm/create-chef360-plan.sh --execute` to write
-   `.kvm/<VM_NAME>/<VM_NAME>-PLAN.env` and `<VM_NAME>-PLAN.md` (mode 0600).
+   `~/repos/.tmp/chef360/<VM_NAME>/<VM_NAME>-PLAN.env` and `<VM_NAME>-PLAN.md` (mode 0600).
    Review `PLAN.md` and tick its approval checklist.
 4. **Build or reuse** — `lib-chef360-kvm.sh` sources `<VM_NAME>-PLAN.env`
    automatically when it exists, so `deploy-chef360-vm.sh`,
@@ -103,7 +110,7 @@ without editing scripts.
 |---|---|---|---|
 | VM_NAME | Unique libvirt domain and disk prefix | `20_chef360` | `20_chef360` |
 | Provision method | `os_iso` fresh autoinstall, `clone` base image reuse, or `existing` for a VM already in libvirt | `os_iso` | `existing` |
-| Clone source image | Path of an already-provisioned base when using `clone` | `-` (see `.kvm/`/libvirt images) | `-` |
+| Clone source image | Path of an already-provisioned base when using `clone` | `-` (see `~/repos/.tmp/chef360/`/libvirt images) | `-` |
 | UBUNTU_ISO | OS install media for `os_iso` only | `~/install/linux/ubuntu-24.04_server_amd64.iso` | `-` |
 | UBUNTU_MIRROR | Apt mirror used during autoinstall and apt upgrade | `http://mirror.arizona.edu/ubuntu` | `-` |
 | VM_INITIAL_PASSWORD | Temporary password for the initial autoinstall user | `devsecops` | `-` |
@@ -265,7 +272,7 @@ The plan template writes only the `PLAN_KEYS` list. `VM_MAC`, `OS_DISK`, and
 - [ ] Certificate files exist and cover `VM_HOSTNAME` and `VM_IP`.
 - [ ] Installer binary and license files exist (SHA-256 verified).
 - [ ] Data drive size meets the >= 200 GiB per-node preflight.
-- [ ] Plan file saved next to this build (`.kvm/<VM_NAME>/<VM_NAME>-PLAN.md`).
+- [ ] Plan file saved outside the checkout (`~/repos/.tmp/chef360/<VM_NAME>/<VM_NAME>-PLAN.md`).
 
 The environment for every build script must match the plan;
 `lib-chef360-kvm.sh` sources `<VM_NAME>-PLAN.env` automatically once the plan is

@@ -60,7 +60,7 @@ AUTH_TOKEN='<authorization-code>' scripts/kvm/acquire-chef360-assets.sh --execut
   published `SHA256SUMS`. Override with `UBUNTU_RELEASE` / `ISO_NAME`.
 - `issue-chef360-certs.sh` issues the root CA, issuing CA, and leaf certificate
   into `~/certs` for `{VM_HOSTNAME}` / `{VM_IP}`. The CA signing keys stay under
-  `.kvm/<VM_NAME>/ca/` (mode 0700) and are never copied to the guest.
+  `~/repos/.tmp/chef360/<VM_NAME>/ca/` (mode 0700) and are never copied to the guest.
 - `acquire-chef360-assets.sh` downloads the `chef-360` installer and
   `license.yaml` from the Chef 360 distribution endpoint (online by default,
   `--airgap` for the full bundle), verifies the 1.7.3 version, and stages both
@@ -85,7 +85,7 @@ scripts/kvm/generate-chef360-config.sh
 scripts/kvm/prepare-chef360-install-inputs.sh
 ```
 
-Generated runtime state is stored under `.kvm/<VM_NAME>/` and excluded from
+Generated runtime state is stored under `~/repos/.tmp/chef360/<VM_NAME>/` outside the checkout and
 Git. It contains password hashes, a generated API token, the license, the
 ConfigValues file, and a private TLS key. Keep the directory owner-readable.
 See `docs/kvm-chef360-project-plan.md` for the full plan parameter reference,
@@ -359,7 +359,7 @@ scripts/kvm/destroy-chef360-vm.sh
 ```
 
 It deletes only the exact `<VM_NAME>` definition, dedicated disks, generated
-installer artifacts, and `.kvm/<VM_NAME>` runtime directory. For an `existing`
+installer artifacts, and `~/repos/.tmp/chef360/<VM_NAME>` runtime directory. For an `existing`
 plan, confirm first that the disks removed are indeed only that VM's.
 
 ## Deployment observations

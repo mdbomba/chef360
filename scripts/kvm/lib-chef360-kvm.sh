@@ -4,6 +4,90 @@ KVM_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${KVM_SCRIPT_DIR}/../.." && pwd)"
 KVM_TMP_ROOT="${KVM_TMP_ROOT:-${HOME}/repos/.tmp/chef360}"
 KVM_STATE_FILE="${KVM_CHEF360_STATE_FILE:-${KVM_TMP_ROOT}/kvm-chef360.env}"
+CHEF360_PROJECT_PARAMS="${CHEF360_PROJECT_PARAMS:-${KVM_TMP_ROOT}/chef360.params}"
+CHEF360_SECRETS_PARAMS="${CHEF360_SECRETS_PARAMS:-${KVM_PARAMS_FILE:-${HOME}/.secrets/chef360.params}}"
+CHEF360_ENV_KEYS=(VM_NAME VM_HOSTNAME VM_SHORT_HOSTNAME VM_IP VM_PREFIX VM_GATEWAY VM_DNS
+  KVM_HOST_IP KVM_HOST_FQDN AUTOMATE_IP AUTOMATE_FQDN NODE1_IP NODE1_FQDN
+  NODE2_IP NODE2_FQDN VM_NETWORK VM_MAC VM_MEMORY_MIB VM_VCPUS VM_CPU_SHARES
+  VM_OS_DISK_GIB VM_DATA_DISK_GIB VM_USER VM_INITIAL_PASSWORD SSH_PRIVATE_KEY
+  SSH_PUBLIC_KEY UBUNTU_ISO UBUNTU_MIRROR PROVISION_METHOD CHEF360_CLONE_SOURCE
+  CHEF360_INSTALLER_SOURCE CHEF360_LICENSE_SOURCE CHEF360_TLS_CERT CHEF360_TLS_KEY
+  CHEF360_TLS_CHAIN CHEF360_ISSUING_CA CHEF360_ROOT_CA TENANT_NAME TENANT_TLD
+  TENANT_SUBDOMAIN TENANT_OU TENANT_OU_DESCRIPTION TENANT_ADMIN_FIRST_NAME
+  TENANT_ADMIN_LAST_NAME TENANT_ADMIN_EMAIL GATEWAY_NODEPORT MAILPIT_NODEPORT
+  RABBITMQ_AMQP_NODEPORT CHEF360_ADMIN_CONSOLE_PASSWORD)
+declare -A CHEF360_CALLER_ENV_SET=() CHEF360_CALLER_ENV_VALUE=()
+for key in "${CHEF360_ENV_KEYS[@]}"; do
+  declaration="$(declare -p "$key" 2>/dev/null || true)"
+  if [[ "$declaration" == "declare -x"* ]]; then
+    CHEF360_CALLER_ENV_SET["$key"]=yes
+    CHEF360_CALLER_ENV_VALUE["$key"]="${!key-}"
+  fi
+done
+
+source_params_overlay() {
+  local file="$1" line key
+  local -a keys=()
+  local -A prior_set=() prior_value=() prior_export=()
+  [[ -f "$file" ]] || return 0
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ ^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)= ]]; then
+      keys+=("${BASH_REMATCH[2]}")
+    fi
+  done < "$file"
+  for key in "${keys[@]}"; do
+    prior_set["$key"]="${!key+x}"
+    prior_value["$key"]="${!key-}"
+    if declare -p "$key" 2>/dev/null | grep -q '^declare -x'; then
+      prior_export["$key"]=yes
+    else
+      prior_export["$key"]=no
+    fi
+  done
+  # shellcheck disable=SC1090
+  source "$file"
+  # Blank values in ~/.secrets mean "prompt/use prior project value", not
+  # "erase a previously generated project snapshot".
+  for key in "${keys[@]}"; do
+    if [[ "${prior_export[$key]}" == yes ]] || \
+       [[ -z "${!key-}" && "${prior_set[$key]}" == x ]]; then
+      printf -v "$key" '%s' "${prior_value[$key]}"
+    fi
+  done
+}
+
+save_chef360_project_params() {
+  local key tmp_file value
+  local -a keys=(VM_NAME VM_HOSTNAME VM_SHORT_HOSTNAME VM_IP VM_PREFIX VM_GATEWAY VM_DNS
+    KVM_HOST_IP KVM_HOST_FQDN AUTOMATE_IP AUTOMATE_FQDN NODE1_IP NODE1_FQDN
+    NODE2_IP NODE2_FQDN VM_NETWORK VM_MAC VM_MEMORY_MIB VM_VCPUS VM_CPU_SHARES
+    VM_OS_DISK_GIB VM_DATA_DISK_GIB VM_DISK_PREALLOCATION VM_OS_DISK_SERIAL
+    VM_DATA_DISK_SERIAL VM_USER VM_INITIAL_PASSWORD SSH_PRIVATE_KEY
+    SSH_PUBLIC_KEY UBUNTU_ISO UBUNTU_MIRROR PROVISION_METHOD CHEF360_CLONE_SOURCE
+    KVM_SOURCE_DIR LIBVIRT_POOL LIBVIRT_URI LIBVIRT_IMAGE_DIR
+    LIBVIRT_SEED_ISO LIBVIRT_INSTALL_KERNEL LIBVIRT_INSTALL_INITRD
+    CHEF360_INSTALLER_SOURCE CHEF360_LICENSE_SOURCE CHEF360_CONFIG_TEMPLATE
+    CHEF360_TLS_CERT CHEF360_TLS_KEY CHEF360_TLS_CHAIN CHEF360_ISSUING_CA
+    CHEF360_ROOT_CA TENANT_NAME TENANT_TLD TENANT_SUBDOMAIN TENANT_OU
+    TENANT_OU_DESCRIPTION TENANT_ADMIN_FIRST_NAME TENANT_ADMIN_LAST_NAME
+    TENANT_ADMIN_EMAIL GATEWAY_NODEPORT MAILPIT_NODEPORT RABBITMQ_AMQP_NODEPORT
+    CHEF360_ADMIN_CONSOLE_PASSWORD CHEF360_IGNORE_APP_PREFLIGHTS
+    SMTP_OPTION STORAGE_OPTION OPENSEARCH_OPTION POSTGRESQL_OPTION TEMPORAL_OPTION
+    CNPG_BACKUP_ENABLED CLUSTER_TOPOLOGY PREFLIGHT_STRICT_MODE)
+  install -d -m 0700 "$(dirname "${CHEF360_PROJECT_PARAMS}")"
+  chmod 0700 "$(dirname "${CHEF360_PROJECT_PARAMS}")"
+  umask 077
+  tmp_file="$(mktemp "${CHEF360_PROJECT_PARAMS}.XXXXXX")"
+  {
+    printf '# Generated Chef 360 build parameters; mode 0600.\n'
+    for key in "${keys[@]}"; do
+      printf -v value '%s' "${!key-}"
+      printf '%s=%q\n' "$key" "$value"
+    done
+  } > "$tmp_file"
+  chmod 0600 "$tmp_file"
+  mv -f -- "$tmp_file" "$CHEF360_PROJECT_PARAMS"
+}
 
 # Capture explicitly-set source variables before the state file is sourced, so
 # an explicit environment override always wins over the state file and the
@@ -43,16 +127,30 @@ if [[ -f "${KVM_STATE_FILE}" ]]; then
   source "${KVM_STATE_FILE}"
 fi
 
-# Machine-specific secrets and VM identity live outside the repository. Sourced
-# after the state file, so precedence is: explicit environment, then this params
-# file, then the generated state file, then the defaults below. Because it is a
-# plain source, leave a key out entirely rather than setting it blank: a blank
-# assignment would override a value the state file had already provided.
-KVM_PARAMS_FILE="${KVM_PARAMS_FILE:-${HOME}/.secrets/chef360.params}"
-if [[ -f "${KVM_PARAMS_FILE}" ]]; then
+# Load project values over generated state. Blank project values are
+# intentional, especially for first-use placeholder params.
+if [[ -f "${CHEF360_PROJECT_PARAMS}" ]]; then
   # shellcheck disable=SC1090
-  source "${KVM_PARAMS_FILE}"
+  source "${CHEF360_PROJECT_PARAMS}"
 fi
+if [[ -f "${CHEF360_SECRETS_PARAMS}" ]]; then
+  if [[ -f "${CHEF360_PROJECT_PARAMS}" ]]; then
+    # Non-empty secrets refresh cached values; blank placeholders keep temp.
+    source_params_overlay "${CHEF360_SECRETS_PARAMS}"
+  else
+    # No cache yet: keep blank placeholders blank so the build prompts.
+    # shellcheck disable=SC1090
+    source "${CHEF360_SECRETS_PARAMS}"
+  fi
+fi
+
+# Values exported by the caller outrank state and both params files.
+for key in "${CHEF360_ENV_KEYS[@]}"; do
+  if [[ "${CHEF360_CALLER_ENV_SET[$key]:-}" == yes ]]; then
+    printf -v "$key" '%s' "${CHEF360_CALLER_ENV_VALUE[$key]}"
+    export "$key"
+  fi
+done
 
 # Restore explicit environment values that the state file would otherwise shadow.
 [[ -z "${SOURCE_ENV_UBUNTU_ISO}" ]] || UBUNTU_ISO="${SOURCE_ENV_UBUNTU_ISO_VALUE}"

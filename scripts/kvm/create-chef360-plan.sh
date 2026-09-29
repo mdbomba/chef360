@@ -106,14 +106,26 @@ validate_vm_name() {
 }
 
 prompt_value() {
-  local name="$1" label="$2" default="$3" input
-  printf '%s [%s]: ' "${label}" "${default}" >&2
-  if IFS= read -r input; then
-    if [[ -n "${input}" ]]; then
-      printf -v "${name}" '%s' "${input}"
-    fi
+  local name="$1" label="$2" default="$3" secret="${4:-false}" input
+  if [[ "${secret}" == true ]]; then
+    printf '%s [hidden value; Enter keeps current]: ' "${label}" >&2
+    IFS= read -r -s input || fail "Could not read ${label} from stdin"
+    printf '\n' >&2
+  else
+    printf '%s [%s]: ' "${label}" "${default}" >&2
+    IFS= read -r input || fail "Could not read ${label} from stdin"
+  fi
+  if [[ -n "${input}" ]]; then
+    printf -v "${name}" '%s' "${input}"
   fi
 }
+
+if [[ ! -f "${CHEF360_SECRETS_PARAMS}" || ! -f "${CHEF360_PROJECT_PARAMS}" ]] || \
+   [[ -z "${VM_NAME}" || -z "${KVM_HOST_IP}" ]]; then
+  INTERACTIVE=true
+  printf 'No complete Chef 360 params file found; prompting to create %s.\n' \
+    "${CHEF360_PROJECT_PARAMS}" >&2
+fi
 
 if [[ "${INTERACTIVE}" == true ]]; then
   printf '\nChef 360 build plan generator\n' >&2
@@ -128,6 +140,7 @@ if [[ "${INTERACTIVE}" == true ]]; then
     prompt_value CHEF360_CLONE_SOURCE "Clone source image path or name" "${CHEF360_CLONE_SOURCE:-}"
   fi
   prompt_value VM_NAME "VM name" "${VM_NAME}"
+  prompt_value KVM_HOST_IP "KVM host management IP" "${KVM_HOST_IP}"
   prompt_value VM_HOSTNAME "Gateway FQDN" "${VM_HOSTNAME}"
   VM_SHORT_HOSTNAME="${VM_SHORT_HOSTNAME:-${VM_HOSTNAME%%.*}}"
   prompt_value VM_SHORT_HOSTNAME "Short hostname" "${VM_SHORT_HOSTNAME}"
@@ -136,8 +149,8 @@ if [[ "${INTERACTIVE}" == true ]]; then
   prompt_value VM_GATEWAY "Default gateway" "${VM_GATEWAY}"
   prompt_value VM_DNS "DNS resolver" "${VM_DNS}"
   prompt_value VM_USER "OS Admin User" "${VM_USER}"
-  prompt_value VM_INITIAL_PASSWORD "OS Admin Password" "${VM_INITIAL_PASSWORD}"
-  prompt_value CHEF360_ADMIN_CONSOLE_PASSWORD "Platform Admin Password" "${CHEF360_ADMIN_CONSOLE_PASSWORD}"
+  prompt_value VM_INITIAL_PASSWORD "OS Admin Password" "${VM_INITIAL_PASSWORD}" true
+  prompt_value CHEF360_ADMIN_CONSOLE_PASSWORD "Platform Admin Password" "${CHEF360_ADMIN_CONSOLE_PASSWORD}" true
   prompt_value SSH_PRIVATE_KEY "SSH private key path" "${SSH_PRIVATE_KEY}"
   prompt_value SSH_PUBLIC_KEY "SSH public key path" "${SSH_PUBLIC_KEY}"
   prompt_value TENANT_NAME "Tenant name" "${TENANT_NAME}"
@@ -154,6 +167,10 @@ if [[ "${INTERACTIVE}" == true ]]; then
   fi
   PLAN_MD="${KVM_WORK_DIR}/${VM_NAME}-PLAN.md"
 fi
+
+# Always refresh the temp snapshot before validation, even if the plan later
+# reports a missing external installer/certificate asset.
+save_chef360_project_params
 
 # For an existing VM the MAC already exists on the guest; record it so the plan
 # and validators agree with the running domain instead of prompting.
