@@ -6,7 +6,11 @@ param(
   [string]$Node2Ip,
 
   [Parameter(Mandatory = $true)]
-  [string]$HostsFilePath
+  [string]$HostsFilePath,
+
+  [string]$Node1Host = 'node1',
+
+  [string]$Node2Host = 'node2'
 )
 
 function Test-IsAdministrator {
@@ -34,7 +38,11 @@ if (-not (Test-IsAdministrator)) {
     '-Node2Ip',
     ('"{0}"' -f $Node2Ip),
     '-HostsFilePath',
-    ('"{0}"' -f $HostsFilePath)
+    ('"{0}"' -f $HostsFilePath),
+    '-Node1Host',
+    ('"{0}"' -f $Node1Host),
+    '-Node2Host',
+    ('"{0}"' -f $Node2Host)
   )
 
   $process = Start-Process PowerShell -Verb RunAs -Wait -PassThru -ArgumentList ($argList -join ' ')
@@ -57,7 +65,7 @@ foreach ($line in $lines) {
   $tokens = ($line -split '\s+') | Where-Object { $_ -ne '' }
   if ($tokens.Count -ge 2) {
     $hostTokens = $tokens[1..($tokens.Count - 1)]
-    if ($hostTokens -contains 'node1' -or $hostTokens -contains 'node2') {
+    if ($hostTokens -contains $Node1Host -or $hostTokens -contains $Node2Host) {
       continue
     }
   }
@@ -65,8 +73,8 @@ foreach ($line in $lines) {
   $filtered.Add($line)
 }
 
-$filtered.Add("$Node1Ip`tnode1")
-$filtered.Add("$Node2Ip`tnode2")
+$filtered.Add("$Node1Ip`t$Node1Host")
+$filtered.Add("$Node2Ip`t$Node2Host")
 
 Set-Content -LiteralPath $HostsFilePath -Value $filtered -Encoding ASCII
 Write-Output "Updated Windows hosts file: $HostsFilePath"

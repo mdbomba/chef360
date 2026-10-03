@@ -31,8 +31,8 @@ This runbook covers deployment, status checks, and teardown for the local Azure 
 - Verified SSH host keys for each node in `~/.ssh/known_hosts`. The bootstrap,
   enrollment, and validation scripts fail closed rather than trusting
   `ssh-keyscan` output. Obtain each fingerprint through a trusted out-of-band
-  path, verify it, then add the key for both its IP address and `node1`/`node2`
-  alias before running those scripts.
+  path, verify it, then add the key for both its IP address and its node alias
+  before running those scripts.
 
 ## Optional local auth bootstrap
 
@@ -78,6 +78,37 @@ Optional custom owner prefix example:
 ```bash
 OBJECT_OWNER_PREFIX=demo ./scripts/azure/deploy-azure-two-linux.sh
 ```
+
+### Node aliases
+
+`NODE1_ALIAS` and `NODE2_ALIAS` (Bash) or `-Node1Alias`/`-Node2Alias`
+(PowerShell) set the guest hostnames used for `osProfile.computerName`, the
+`/etc/hosts` entries inside each VM, the Windows and WSL hosts entries, and the
+Chef Infra/Chef 360 node names. They default to `node1`/`node2`.
+
+They are intentionally independent of `namePrefix`. Azure resource names stay
+derivable from `namePrefix` alone, which is what status, destroy, and the NSG
+helpers query on, so operator-chosen node identities can avoid collisions with
+hostnames already mapped on a shared workstation. Aliases must be unique and
+match `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`; the deploy scripts reject
+anything else before contacting Azure.
+
+```bash
+NODE1_ALIAS=mbomba-node1 NODE2_ALIAS=mbomba-node2 \
+  ./scripts/azure/deploy-azure-two-linux.sh rg-chef360-mbomba
+```
+
+The aliases are passed to the template as the `nodeAliases` parameter, so
+regenerate `infra/azure/azure-two-linux-lowcost.json` with `az bicep build`
+after changing the Bicep file.
+
+### Scope gates
+
+`ENABLE_DSM_WORKFLOW` (Bash) or `-EnableDsmWorkflow` (PowerShell) controls the
+Chef Infra path (knife bootstrap, policy assignment, `chef-client`, and
+hosts-file SSH-by-name validation). Set it to `false` for Chef 360 Node
+Management-only workflows, where enrollment happens from the workstation and no
+Chef Infra node registration is required. Defaults to `true`.
 
 ## Check status
 
@@ -128,6 +159,8 @@ Example with confirmation bypass:
 - `deploy-azure-two-linux.sh` resolves the parameter file relative to the script path, so it remains portable inside this repo.
 - Both deploy workflows replace the target resource group's tags with the same 12 values used by the template, sourced from `infra/azure/azure-two-linux-lowcost.parameters.json`. The RG keys `Application`, `Team`, and `Expiration` use the capitalization required by organization policy; the template's corresponding resource keys are lowercase.
 - Expiration defaults to two days from each deployment/tagging run in UTC (`YYYY-MM-DD`). The workflows refresh tags on the RG and existing tagged deployment resources even when VM creation is skipped. Set `EXPIRATION` to explicitly override the default.
-- The Azure template configures static private IPs, local `node1`/`node2` host entries, SSH prerequisites, passwordless sudo for the admin user, and a `/var/lib/chef360-template-ready` cloud-init marker.
+- The Azure template configures static private IPs, local host entries for the configured node aliases, SSH prerequisites, passwordless sudo for the admin user, and a `/var/lib/chef360-template-ready` cloud-init marker. The cloud-init entry rewrite is idempotent, so re-provisioning with a changed private IP replaces the old mapping instead of appending a duplicate.
+- The template's NSG exposes SSH (port 22) and all inbound ports, both restricted to the `sshSourceCidr` source. Chef 360-specific SSH rules stay governed by `chef360SshSourceCidrs`; leave it empty unless Chef 360 must originate the SSH connection.
+- WSL keeps its own `/etc/hosts`, so the deploy scripts append alias entries there when `getent` does not already resolve them to the expected addresses. Windows hosts entries are still updated through the `powershell.exe` helper, which requires administrator elevation.
 - Windows hosts updates and Chef Infra/Chef360 enrollment remain workflow operations because they require workstation access and external service credentials.
 - If deployment fails, verify the resource group name, Azure subscription context, template spec ID, and values in `infra/azure/azure-two-linux-lowcost.parameters.json`.

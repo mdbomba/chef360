@@ -3,10 +3,12 @@ set -euo pipefail
 
 NODE1_IP="${1:-}"
 NODE2_IP="${2:-}"
+NODE1_HOST="${3:-node1}"
+NODE2_HOST="${4:-node2}"
 WINDOWS_HOSTS_FILE="${WINDOWS_HOSTS_FILE:-/mnt/c/Windows/System32/drivers/etc/hosts}"
 
 if [[ -z "${NODE1_IP}" || -z "${NODE2_IP}" ]]; then
-  printf "Usage: %s <node1-ip> <node2-ip>\n" "$(basename "$0")"
+  printf "Usage: %s <node1-ip> <node2-ip> [node1-hostname] [node2-hostname]\n" "$(basename "$0")"
   exit 1
 fi
 
@@ -37,8 +39,8 @@ HOSTS_RESULT="$(powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "\
     if (\$tokens.Count -lt 2) { continue }; \
     \$ip = \$tokens[0]; \
     \$hosts = \$tokens[1..(\$tokens.Count - 1)]; \
-    if (\$hosts -contains 'node1') { \$n1 = \$ip }; \
-    if (\$hosts -contains 'node2') { \$n2 = \$ip }; \
+    if (\$hosts -contains '${NODE1_HOST}') { \$n1 = \$ip }; \
+    if (\$hosts -contains '${NODE2_HOST}') { \$n2 = \$ip }; \
   }; \
   Write-Output (\"\$n1|\$n2\")" | tr -d '\r')"
 
@@ -46,10 +48,12 @@ NODE1_CURRENT="${HOSTS_RESULT%%|*}"
 NODE2_CURRENT="${HOSTS_RESULT#*|}"
 
 if [[ "${NODE1_CURRENT}" == "${NODE1_IP}" && "${NODE2_CURRENT}" == "${NODE2_IP}" ]]; then
-  printf "Windows hosts entries are correct: node1=%s node2=%s\n" "${NODE1_CURRENT}" "${NODE2_CURRENT}"
+  printf "Windows hosts entries are correct: %s=%s %s=%s\n" \
+  "${NODE1_HOST}" "${NODE1_CURRENT}" "${NODE2_HOST}" "${NODE2_CURRENT}"
   exit 0
 fi
 
-printf "Windows hosts entries mismatch: node1=%s (expected %s), node2=%s (expected %s)\n" \
-  "${NODE1_CURRENT:-<missing>}" "${NODE1_IP}" "${NODE2_CURRENT:-<missing>}" "${NODE2_IP}"
+printf "Windows hosts entries mismatch: %s=%s (expected %s), %s=%s (expected %s)\n" \
+  "${NODE1_HOST}" "${NODE1_CURRENT:-<missing>}" "${NODE1_IP}" \
+  "${NODE2_HOST}" "${NODE2_CURRENT:-<missing>}" "${NODE2_IP}"
 exit 1

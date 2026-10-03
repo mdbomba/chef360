@@ -11,6 +11,9 @@ param namePrefix string = 'sa-linux'
 @maxValue(2)
 param vmCount int = 2
 
+@description('Guest hostnames used inside each VM, in /etc/hosts and as osProfile.computerName. These are the node names Chef 360 records. Must contain exactly vmCount entries; the index matches the VM index.')
+param nodeAliases array = ['node1', 'node2']
+
 @description('Admin username for Linux VMs.')
 param adminUsername string = 'chef'
 
@@ -104,6 +107,17 @@ var vmIndices = range(0, vmCount)
 var vmNames = [for i in vmIndices: '${namePrefix}-${i + 1}']
 var privateIpAddresses = [for i in vmIndices: cidrHost(subnetAddressPrefix, privateIpHostOffset + i)]
 var expectedPublicIpNames = [for vmName in vmNames: '${vmName}-pip']
+
+// Guest hostnames. Kept separate from vmNames so Azure resource names stay
+// derivable from namePrefix alone (status/destroy/verify all query on it),
+// while the node identity Chef 360 records is operator-controlled.
+// nodeAliases is kept separate from vmNames so Azure resource names stay derivable
+// from namePrefix alone (status/destroy/verify all query on it), while the node
+// identity Chef 360 records is operator-controlled.
+
+// /etc/hosts is rewritten so each VM resolves both guest hostnames to the static
+// private addresses. sed patterns and printf arguments are placeholders so the
+// alias names are not baked into the cloud-init literal.
 var linuxCloudInit = base64(format('''
 #cloud-config
 package_update: true
@@ -120,12 +134,12 @@ write_files:
     content: |
       {0} ALL=(ALL) NOPASSWD:ALL
 runcmd:
-  - [ sh, -c, "sed -i '/[[:space:]]node1$/d; /[[:space:]]node2$/d' /etc/hosts && printf '%s\\tnode1\\n%s\\tnode2\\n' '{1}' '{2}' >> /etc/hosts" ]
+  - [ sh, -c, "sed -i '/[[:space:]]{1}$/d; /[[:space:]]{2}$/d' /etc/hosts && printf '%s\\t{1}\\n%s\\t{2}\\n' '{3}' '{4}' >> /etc/hosts" ]
   - [ chmod, '0440', /etc/sudoers.d/chef ]
-  - [ visudo, -cf, /etc/sudoers.d/chef ]
+  - [ visudo, -cf /etc/sudoers.d/chef ]
   - [ systemctl, enable, --now, ssh ]
   - [ touch, /var/lib/chef360-template-ready ]
-''', adminUsername, privateIpAddresses[0], privateIpAddresses[1]))
+''', adminUsername, nodeAliases[0], nodeAliases[1], privateIpAddresses[0], privateIpAddresses[1]))
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: '${namePrefix}-nsg'
@@ -147,16 +161,19 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
         }
       }
       {
-        name: 'allow-https'
+        // Replaces the previous 'allow-https' rule, which allowed 443 from any
+        // source. Management access is scoped to sshSourceCidr on all inbound
+        // ports instead of exposing a service port to the internet.
+        name: 'allow-workstation-all'
         properties: {
           priority: 1010
-          protocol: 'Tcp'
+          protocol: '*'
           access: 'Allow'
           direction: 'Inbound'
-          sourceAddressPrefix: '*'
+          sourceAddressPrefix: sshSourceCidr
           sourcePortRange: '*'
           destinationAddressPrefix: '*'
-          destinationPortRange: '443'
+          destinationPortRange: '*'
         }
       }
     ], empty(chef360SshSourceCidrs) ? [] : [
@@ -265,7 +282,7 @@ resource linuxVms 'Microsoft.Compute/virtualMachines@2024-03-01' = [for (vmName,
       }
     }
     osProfile: {
-      computerName: vmName
+      computerName: nodeAliases[i]
       adminUsername: adminUsername
       customData: linuxCloudInit
       linuxConfiguration: {
@@ -306,4 +323,5 @@ resource linuxVms 'Microsoft.Compute/virtualMachines@2024-03-01' = [for (vmName,
 output vmNames array = [for i in vmIndices: linuxVms[i].name]
 output privateIps array = [for i in vmIndices: nics[i].properties.ipConfigurations[0].properties.privateIPAddress]
 output publicIpResourceNames array = createPublicIp ? expectedPublicIpNames : []
-output nodeHostEntries array = [for i in vmIndices: '${privateIpAddresses[i]} ${vmNames[i]}']
+output nodeHostEntries array = [for i in vmIndices: '${privateIpAddresses[i]} ${nodeAliases[i]}']
+output nodeAliasesOut array = nodeAliases

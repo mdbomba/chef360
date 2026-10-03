@@ -35,6 +35,30 @@ CHEF_POLICY_GROUP="${CHEF_POLICY_GROUP:-dev}"
 ENABLE_CHEF360_REGISTRATION="${ENABLE_CHEF360_REGISTRATION:-true}"
 SSH_SOURCE_CIDR="${SSH_SOURCE_CIDR_OVERRIDE}"
 EXPIRATION="${EXPIRATION:-$(date -u -d '+2 days' '+%Y-%m-%d')}"
+ENABLE_DSM_WORKFLOW="${ENABLE_DSM_WORKFLOW:-true}"
+
+# Guest hostnames written to /etc/hosts on the workstation. These are independent of
+# the Azure resource names (which stay derivable from NAME_PREFIX) so operator-chosen
+# node identities do not have to follow Azure naming constraints or risk colliding
+# with other hostnames already mapped on a shared workstation.
+NODE1_ALIAS="${NODE1_ALIAS:-node1}"
+NODE2_ALIAS="${NODE2_ALIAS:-node2}"
+
+validate_node_aliases() {
+  local alias
+  for alias in "${NODE1_ALIAS}" "${NODE2_ALIAS}"; do
+    # Aliases become guest hostnames and Bicep parameter values, so restrict them
+    # to characters that are valid in a Linux hostname and JSON-safe.
+    if [[ ! "${alias}" =~ ^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$ ]]; then
+      printf "Invalid node alias '%s'. Use 1-63 lowercase alphanumeric or hyphen characters, not starting or ending with a hyphen.\n" "${alias}"
+      exit 1
+    fi
+  done
+  if [[ "${NODE1_ALIAS}" == "${NODE2_ALIAS}" ]]; then
+    printf "Node aliases must be unique (both are '%s').\n" "${NODE1_ALIAS}"
+    exit 1
+  fi
+}
 
 log_step() {
   printf "[%s] %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
@@ -53,6 +77,8 @@ NODE1_IP=${NODE1_IP}
 NODE2_IP=${NODE2_IP}
 NODE1_TARGET=${NODE1_IP}
 NODE2_TARGET=${NODE2_IP}
+NODE1_ALIAS=${NODE1_ALIAS}
+NODE2_ALIAS=${NODE2_ALIAS}
 CHEF_NODE_USER=${CHEF_NODE_USER}
 CHEF_POLICY_NAME=${CHEF_POLICY_NAME}
 CHEF_POLICY_GROUP=${CHEF_POLICY_GROUP}
@@ -180,6 +206,7 @@ deploy_nodes_if_missing() {
       --parameters "@${PARAM_FILE}" \
       --parameters namePrefix="${NAME_PREFIX}" \
       --parameters vmSize="${VM_SIZE}" \
+      --parameters nodeAliases="[\"${NODE1_ALIAS}\",\"${NODE2_ALIAS}\"]" \
       --parameters sshSourceCidr="${SSH_SOURCE_CIDR}" \
       --parameters expiration="${EXPIRATION}" \
       --only-show-errors \
@@ -192,6 +219,7 @@ deploy_nodes_if_missing() {
       --parameters "@${PARAM_FILE}" \
       --parameters namePrefix="${NAME_PREFIX}" \
       --parameters vmSize="${VM_SIZE}" \
+      --parameters nodeAliases="[\"${NODE1_ALIAS}\",\"${NODE2_ALIAS}\"]" \
       --parameters sshSourceCidr="${SSH_SOURCE_CIDR}" \
       --parameters expiration="${EXPIRATION}" \
       --only-show-errors \
@@ -229,11 +257,11 @@ resolve_node_ips() {
   done
 
   if [[ -z "${NODE1_IP}" || -z "${NODE2_IP}" ]]; then
-    printf "Unable to resolve node IPs. node1='%s', node2='%s'\n" "${NODE1_IP}" "${NODE2_IP}"
+    printf "Unable to resolve node IPs. %s='%s', %s='%s'\n" "${NODE1_ALIAS}" "${NODE1_IP}" "${NODE2_ALIAS}" "${NODE2_IP}"
     exit 1
   fi
 
-  log_step "Resolved node addresses: node1=${NODE1_IP} node2=${NODE2_IP}"
+  log_step "Resolved node addresses: ${NODE1_ALIAS}=${NODE1_IP} ${NODE2_ALIAS}=${NODE2_IP}"
 }
 
 ensure_chef_sudo_nopasswd() {
@@ -275,7 +303,7 @@ verify_node_prerequisites() {
 
   expected_key="$(ssh-keygen -y -f "${SSH_PRIVATE_KEY}" | awk '{print $1 " " $2}')"
   ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node_ip}" \
-    "set -euo pipefail; test \"\$(id -un)\" = '${CHEF_NODE_USER}'; command -v sshd >/dev/null; systemctl is-enabled ssh >/dev/null; systemctl is-active ssh >/dev/null; sudo test \"\$(stat -c '%U:%G:%a' /etc/sudoers.d/chef)\" = 'root:root:440'; sudo test \"\$(cat /etc/sudoers.d/chef)\" = '${CHEF_NODE_USER} ALL=(ALL) NOPASSWD:ALL'; awk '{print \$1 \" \" \$2}' \"\${HOME}/.ssh/authorized_keys\" | grep -Fqx '${expected_key}'"
+    "set -euo pipefail; test \"\$(id -un)\" = '${CHEF_NODE_USER}'; command -v sshd >/dev/null; systemctl is-enabled ssh >/dev/null; systemctl is-active ssh >/dev/null; test \"\$(sudo stat -c '%U:%G:%a' /etc/sudoers.d/chef)\" = 'root:root:440'; test \"\$(sudo cat /etc/sudoers.d/chef)\" = '${CHEF_NODE_USER} ALL=(ALL) NOPASSWD:ALL'; awk '{print \$1 \" \" \$2}' \"\${HOME}/.ssh/authorized_keys\" | grep -Fqx '${expected_key}'"
 }
 
 verify_chef_sudo_nopasswd() {
@@ -288,23 +316,35 @@ verify_chef_sudo_nopasswd() {
 }
 
 check_and_fix_windows_hosts() {
-  log_step "Step 4/5: Verifying Windows hosts entries for node1/node2"
-  if "${WINDOWS_HOSTS_CHECK_SCRIPT}" "${NODE1_IP}" "${NODE2_IP}"; then
+  log_step "Step 4/5: Verifying Windows hosts entries for ${NODE1_ALIAS}/${NODE2_ALIAS}"
+
+  # WSL keeps its own /etc/hosts, so the Windows hosts edit alone is not always
+  # visible here. Append the aliases directly when resolution is missing or wrong.
+  ensure_wsl_hosts_entry() {
+    local alias="$1"
+    local ip="$2"
+    if [[ "$(getent hosts "${alias}" | awk 'NR == 1 {print $1}')" == "${ip}" ]]; then
+      return 0
+    fi
+    sed -i "/[[:space:]]${alias}\$/d" /etc/hosts 2>/dev/null || true
+    printf '%s\t%s\n' "${ip}" "${alias}" | sudo tee -a /etc/hosts >/dev/null
+  }
+
+  if "${WINDOWS_HOSTS_CHECK_SCRIPT}" "${NODE1_IP}" "${NODE2_IP}" "${NODE1_ALIAS}" "${NODE2_ALIAS}"; then
     log_step "Windows hosts entries are already correct"
   else
     log_step "Windows hosts entries are missing/incorrect; updating now"
-    "${WINDOWS_HOSTS_UPDATE_SCRIPT}" "${NODE1_IP}" "${NODE2_IP}"
-    "${WINDOWS_HOSTS_CHECK_SCRIPT}" "${NODE1_IP}" "${NODE2_IP}"
+    "${WINDOWS_HOSTS_UPDATE_SCRIPT}" "${NODE1_IP}" "${NODE2_IP}" "${NODE1_ALIAS}" "${NODE2_ALIAS}"
+    "${WINDOWS_HOSTS_CHECK_SCRIPT}" "${NODE1_IP}" "${NODE2_IP}" "${NODE1_ALIAS}" "${NODE2_ALIAS}"
   fi
 
-  if [[ "$(getent hosts node1 | awk 'NR == 1 {print $1}')" != "${NODE1_IP}" || "$(getent hosts node2 | awk 'NR == 1 {print $1}')" != "${NODE2_IP}" ]]; then
-    printf "WSL hostname resolution does not match the Windows hosts file.\n"
-    exit 1
-  fi
-  for node in node1 node2; do
+  ensure_wsl_hosts_entry "${NODE1_ALIAS}" "${NODE1_IP}"
+  ensure_wsl_hosts_entry "${NODE2_ALIAS}" "${NODE2_IP}"
+
+  for node in "${NODE1_ALIAS}" "${NODE2_ALIAS}"; do
     ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node}" true
   done
-  log_step "Windows hosts entries updated and verified"
+  log_step "Hosts entries updated and verified for ${NODE1_ALIAS}/${NODE2_ALIAS}"
 }
 
 node_exists_in_chef() {
@@ -323,10 +363,10 @@ bootstrap_if_needed() {
   local node2_exists=false
 
   log_step "Step 6/7: Checking Chef Infra node registration"
-  if node_exists_in_chef "node1"; then
+  if node_exists_in_chef "${NODE1_ALIAS}"; then
     node1_exists=true
   fi
-  if node_exists_in_chef "node2"; then
+  if node_exists_in_chef "${NODE2_ALIAS}"; then
     node2_exists=true
   fi
 
@@ -352,7 +392,7 @@ validate_dsm_prerequisites() {
 
 validate_dsm_registration() {
   local node
-  for node in node1 node2; do
+  for node in "${NODE1_ALIAS}" "${NODE2_ALIAS}"; do
     knife node show "${node}" >/dev/null
     knife client show "${node}" >/dev/null
   done
@@ -371,7 +411,7 @@ validate_bootstrap_policy() {
   normalized_expected="$(normalize_policy_name "${expected_name}")"
 
   log_step "Step 8: Validating node policy assignments"
-  for node in node1 node2; do
+  for node in "${NODE1_ALIAS}" "${NODE2_ALIAS}"; do
     current_name="$(get_node_policy_value "${node}" "policy_name")"
     current_group="$(get_node_policy_value "${node}" "policy_group")"
     normalized_current="$(normalize_policy_name "${current_name}")"
@@ -401,7 +441,7 @@ validate_bootstrap_policy() {
 
 run_chef_client_on_nodes() {
   log_step "Step 9: Running sudo chef-client on each node"
-  for node in node1 node2; do
+  for node in "${NODE1_ALIAS}" "${NODE2_ALIAS}"; do
     ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -i "${SSH_PRIVATE_KEY}" "${CHEF_NODE_USER}@${node}" "sudo -n chef-client"
   done
 }
@@ -416,8 +456,8 @@ register_nodes_with_chef360() {
   "${REGISTER_CHEF360_SCRIPT}" \
     "${SSH_PRIVATE_KEY}" \
     "${CHEF_NODE_USER}" \
-    "node1" \
-    "node2"
+    "${NODE1_ALIAS}" \
+    "${NODE2_ALIAS}"
 }
 
 if [[ -d "${PROJECT_AZURE_DIR}" ]]; then
@@ -455,6 +495,7 @@ require_command "ssh"
 require_command "ssh-keygen"
 require_command "getent"
 
+validate_node_aliases
 resolve_ssh_source_cidr
 sync_resource_group_tags
 deploy_nodes_if_missing
@@ -468,12 +509,20 @@ ensure_chef_sudo_nopasswd
 verify_chef_sudo_nopasswd
 verify_node_prerequisites "${NODE1_IP}"
 verify_node_prerequisites "${NODE2_IP}"
-check_and_fix_windows_hosts
-validate_dsm_prerequisites
-bootstrap_if_needed
-validate_dsm_registration
-validate_bootstrap_policy
-run_chef_client_on_nodes
+
+if [[ "${ENABLE_DSM_WORKFLOW}" == "true" ]]; then
+  check_and_fix_windows_hosts
+  validate_dsm_prerequisites
+  bootstrap_if_needed
+  validate_dsm_registration
+  validate_bootstrap_policy
+  run_chef_client_on_nodes
+else
+  # Chef 360 Node Management enrolls from the workstation, so the DSM path
+  # (bootstrap + chef-client + hosts-file SSH-by-name) is not required.
+  log_step "DSM workflow disabled (ENABLE_DSM_WORKFLOW=${ENABLE_DSM_WORKFLOW}); skipping Chef Infra bootstrap, policy, and chef-client steps"
+fi
+
 register_nodes_with_chef360
 
-log_step "Workflow complete: nodes deployed, configured, bootstrapped, validated, chef-client run, and Chef 360 registration attempted"
+log_step "Workflow complete: nodes deployed, configured, ${NODE1_ALIAS}/${NODE2_ALIAS} ready, and Chef 360 registration attempted"

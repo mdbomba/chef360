@@ -13,8 +13,9 @@ param(
   [bool]$EnableChef360Registration = $(if ($env:ENABLE_CHEF360_REGISTRATION) { $env:ENABLE_CHEF360_REGISTRATION -eq 'true' } else { $true }),
   [string]$SshSourceCidr = $(if ($env:SSH_SOURCE_CIDR) { $env:SSH_SOURCE_CIDR } else { '' }),
   [string]$Expiration = $(if ($env:EXPIRATION) { $env:EXPIRATION } else { '' }),
-  [string]$Node1Target = 'node1',
-  [string]$Node2Target = 'node2',
+  [string]$Node1Alias = $(if ($env:NODE1_ALIAS) { $env:NODE1_ALIAS } else { 'node1' }),
+  [string]$Node2Alias = $(if ($env:NODE2_ALIAS) { $env:NODE2_ALIAS } else { 'node2' }),
+  [bool]$EnableDsmWorkflow = $(if ($env:ENABLE_DSM_WORKFLOW) { $env:ENABLE_DSM_WORKFLOW -eq 'true' } else { $true }),
   [string]$WindowsHostsFile = '/mnt/c/Windows/System32/drivers/etc/hosts'
 )
 
@@ -80,6 +81,19 @@ function Write-Step {
   Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $Message"
 }
 
+function Assert-NodeAliases {
+  foreach ($alias in @($Node1Alias, $Node2Alias)) {
+    # Aliases become guest hostnames and Bicep parameter values, so restrict them
+    # to characters that are valid in a Linux hostname and JSON-safe.
+    if ($alias -notmatch '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$') {
+      throw "Invalid node alias '$alias'. Use 1-63 lowercase alphanumeric or hyphen characters, not starting or ending with a hyphen."
+    }
+  }
+  if ($Node1Alias -eq $Node2Alias) {
+    throw "Node aliases must be unique (both are '$Node1Alias')."
+  }
+}
+
 function Save-RuntimeParameters {
   $lines = @(
     "RESOURCE_GROUP=$ResourceGroup",
@@ -92,6 +106,8 @@ function Save-RuntimeParameters {
     "NODE2_IP=$($ips.Node2)",
     "NODE1_TARGET=$($ips.Node1)",
     "NODE2_TARGET=$($ips.Node2)",
+    "NODE1_ALIAS=$Node1Alias",
+    "NODE2_ALIAS=$Node2Alias",
     "CHEF_NODE_USER=$ChefNodeUser",
     "CHEF_POLICY_NAME=$ChefPolicyName",
     "CHEF_POLICY_GROUP=$ChefPolicyGroup",
@@ -241,7 +257,7 @@ function Resolve-NodeIps {
   $node2Ip = if ($vm2.publicIps) { ($vm2.publicIps -split ',')[0].Trim() } else { ($vm2.privateIps -split ',')[0].Trim() }
 
   if ([string]::IsNullOrWhiteSpace($node1Ip) -or [string]::IsNullOrWhiteSpace($node2Ip)) {
-    throw "Unable to resolve node IPs. node1='$node1Ip', node2='$node2Ip'"
+    throw "Unable to resolve node IPs. $Node1Alias='$node1Ip', $Node2Alias='$node2Ip'"
   }
 
   return @{
@@ -326,7 +342,7 @@ function Test-NodePrerequisites {
     throw 'Unable to parse SSH public key'
   }
   $expectedKey = "$($keyParts[0]) $($keyParts[1])"
-  $remoteCommand = 'set -euo pipefail; test "$(id -un)" = ''{0}''; command -v sshd >/dev/null; systemctl is-enabled ssh >/dev/null; systemctl is-active ssh >/dev/null; sudo test "$(stat -c ''%U:%G:%a'' /etc/sudoers.d/chef)" = ''root:root:440''; sudo test "$(cat /etc/sudoers.d/chef)" = ''{0} ALL=(ALL) NOPASSWD:ALL''; awk ''{{print $1 " " $2}}'' "$HOME/.ssh/authorized_keys" | grep -Fqx ''{1}''' -f $ChefNodeUser, $expectedKey
+  $remoteCommand = 'set -euo pipefail; test "$(id -un)" = ''{0}''; command -v sshd >/dev/null; systemctl is-enabled ssh >/dev/null; systemctl is-active ssh >/dev/null; test "$(sudo stat -c ''%U:%G:%a'' /etc/sudoers.d/chef)" = ''root:root:440''; test "$(sudo cat /etc/sudoers.d/chef)" = ''{0} ALL=(ALL) NOPASSWD:ALL''; awk ''{{print $1 " " $2}}'' "$HOME/.ssh/authorized_keys" | grep -Fqx ''{1}''' -f $ChefNodeUser, $expectedKey
   $sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
   Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@$Target", $remoteCommand)) -ErrorMessage "Node prerequisite validation failed for $Target"
 }
@@ -342,23 +358,37 @@ function Sync-WindowsHosts {
   }
 
   $env:WINDOWS_HOSTS_FILE = $WindowsHostsFile
-  Write-Step 'Step 4: Ensuring Windows hosts entries for node1/node2'
-  & bash $CheckWindowsHostsScript $Node1Ip $Node2Ip
+  Write-Step "Step 4: Ensuring Windows hosts entries for $Node1Alias/$Node2Alias"
+  & bash $CheckWindowsHostsScript $Node1Ip $Node2Ip $Node1Alias $Node2Alias
   if ($LASTEXITCODE -ne 0) {
-    Invoke-Checked -FilePath 'bash' -Arguments @($UpdateWindowsHostsScript, $Node1Ip, $Node2Ip) -ErrorMessage 'Failed to update Windows hosts entries'
+    Invoke-Checked -FilePath 'bash' -Arguments @($UpdateWindowsHostsScript, $Node1Ip, $Node2Ip, $Node1Alias, $Node2Alias) -ErrorMessage 'Failed to update Windows hosts entries'
   }
-  Invoke-Checked -FilePath 'bash' -Arguments @($CheckWindowsHostsScript, $Node1Ip, $Node2Ip) -ErrorMessage 'Windows hosts entries did not validate'
+  Invoke-Checked -FilePath 'bash' -Arguments @($CheckWindowsHostsScript, $Node1Ip, $Node2Ip, $Node1Alias, $Node2Alias) -ErrorMessage 'Windows hosts entries did not validate'
 
-  $node1Resolved = ((Get-CheckedOutput -FilePath 'getent' -Arguments @('hosts', 'node1') -ErrorMessage 'Unable to resolve node1') -join "`n" -split '\s+')[0]
-  $node2Resolved = ((Get-CheckedOutput -FilePath 'getent' -Arguments @('hosts', 'node2') -ErrorMessage 'Unable to resolve node2') -join "`n" -split '\s+')[0]
+  # WSL keeps its own /etc/hosts, so the Windows hosts edit alone is not always
+  # visible here. Append the aliases directly when resolution is missing or wrong.
+  $wslTargets = @(
+    @{ Alias = $Node1Alias; Ip = $Node1Ip },
+    @{ Alias = $Node2Alias; Ip = $Node2Ip }
+  )
+  foreach ($target in $wslTargets) {
+    $resolved = @(& getent hosts $target.Alias 2>$null)
+    if ($resolved.Count -eq 0 -or (($resolved -join "`n") -split '\s+')[0] -ne $target.Ip) {
+      $sedCommand = "sed -i '/[[:space:]]$($target.Alias)`$/d' /etc/hosts && printf '%s\t$($target.Alias)\n' '$($target.Ip)' >> /etc/hosts"
+      Invoke-Checked -FilePath 'sudo' -Arguments @('bash', '-c', $sedCommand) -ErrorMessage "Unable to update /etc/hosts entry for $($target.Alias)"
+    }
+  }
+
+  $node1Resolved = ((Get-CheckedOutput -FilePath 'getent' -Arguments @('hosts', $Node1Alias) -ErrorMessage "Unable to resolve $Node1Alias") -join "`n" -split '\s+')[0]
+  $node2Resolved = ((Get-CheckedOutput -FilePath 'getent' -Arguments @('hosts', $Node2Alias) -ErrorMessage "Unable to resolve $Node2Alias") -join "`n" -split '\s+')[0]
   if ($node1Resolved -ne $Node1Ip -or $node2Resolved -ne $Node2Ip) {
     throw 'WSL hostname resolution does not match the Windows hosts file'
   }
 
   $sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
-  Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@node1", 'true')) -ErrorMessage 'Alias SSH validation failed for node1'
-  Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@node2", 'true')) -ErrorMessage 'Alias SSH validation failed for node2'
-  Write-Step 'Windows hosts entries and WSL aliases validated'
+  Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@$Node1Alias", 'true')) -ErrorMessage "Alias SSH validation failed for $Node1Alias"
+  Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@$Node2Alias", 'true')) -ErrorMessage "Alias SSH validation failed for $Node2Alias"
+  Write-Step "Windows hosts entries and WSL aliases validated for $Node1Alias/$Node2Alias"
 }
 
 function Test-DsmPolicy {
@@ -369,7 +399,7 @@ function Test-DsmPolicy {
 }
 
 function Test-DsmRegistration {
-  foreach ($node in 'node1', 'node2') {
+  foreach ($node in $Node1Alias, $Node2Alias) {
     Invoke-Checked -FilePath 'knife' -Arguments @('node', 'show', $node) -ErrorMessage "Chef Infra node '$node' is missing"
     Invoke-Checked -FilePath 'knife' -Arguments @('client', 'show', $node) -ErrorMessage "Chef Infra client '$node' is missing"
   }
@@ -405,6 +435,7 @@ foreach ($helper in @($CheckWindowsHostsScript, $UpdateWindowsHostsScript, $Regi
   }
 }
 
+Assert-NodeAliases
 Write-Step 'Step 1: Checking current VM deployment state'
 Resolve-SshSourceCidr
 Sync-ResourceGroupTags
@@ -420,6 +451,7 @@ if ($vmCount -lt 2) {
       '--parameters', "@$ParamFile",
       '--parameters', "namePrefix=$NamePrefix",
       '--parameters', "vmSize=$VmSize",
+      '--parameters', "nodeAliases=[\`"$Node1Alias\`",\`"$Node2Alias\`"]",
       '--parameters', "sshSourceCidr=$SshSourceCidr",
       '--parameters', "expiration=$Expiration",
       '--only-show-errors',
@@ -435,6 +467,7 @@ if ($vmCount -lt 2) {
       '--parameters', "@$ParamFile",
       '--parameters', "namePrefix=$NamePrefix",
       '--parameters', "vmSize=$VmSize",
+      '--parameters', "nodeAliases=[\`"$Node1Alias\`",\`"$Node2Alias\`"]",
       '--parameters', "sshSourceCidr=$SshSourceCidr",
       '--parameters', "expiration=$Expiration",
       '--only-show-errors',
@@ -450,7 +483,7 @@ Sync-DeployedResourceTags
 Update-SshNsgRule
 
 $ips = Resolve-NodeIps
-Write-Step "Resolved node addresses: node1=$($ips.Node1) node2=$($ips.Node2)"
+Write-Step "Resolved node addresses: $Node1Alias=$($ips.Node1) $Node2Alias=$($ips.Node2)"
 Save-RuntimeParameters
 
 Wait-NodeReady -Target $ips.Node1
@@ -462,72 +495,79 @@ Test-SudoNoPassword -Target $ips.Node2
 Test-NodePrerequisites -Target $ips.Node1
 Test-NodePrerequisites -Target $ips.Node2
 
-Sync-WindowsHosts -Node1Ip $ips.Node1 -Node2Ip $ips.Node2
-Test-DsmPolicy
+if ($EnableDsmWorkflow) {
+  Sync-WindowsHosts -Node1Ip $ips.Node1 -Node2Ip $ips.Node2
+  Test-DsmPolicy
 
-Write-Step 'Step 5: Checking Chef Infra node registration'
-$node1Exists = Test-ChefNodeExists -NodeName 'node1'
-$node2Exists = Test-ChefNodeExists -NodeName 'node2'
-if (-not ($node1Exists -and $node2Exists)) {
-  Write-Step 'One or more nodes missing in Chef Infra; running selective knife bootstrap'
-  $bootstrapTargets = @()
-  if (-not $node1Exists) { $bootstrapTargets += @{ Alias = 'node1'; Target = $ips.Node1 } }
-  if (-not $node2Exists) { $bootstrapTargets += @{ Alias = 'node2'; Target = $ips.Node2 } }
-  foreach ($item in $bootstrapTargets) {
-    Invoke-Checked -FilePath 'knife' -Arguments @(
-      'bootstrap', $item.Target,
-      '--yes',
-      '--connection-user', $ChefNodeUser,
-      '--node-name', $item.Alias,
-      '--ssh-identity-file', $SshPrivateKey,
-      '--ssh-verify-host-key', 'never',
-      '--sudo',
-      '--chef-license', 'accept-silent',
-      '--policy-group', $ChefPolicyGroup,
-      '--policy-name', $ChefPolicyName
-    ) -ErrorMessage "Knife bootstrap failed for $($item.Alias)"
+  Write-Step 'Step 5: Checking Chef Infra node registration'
+  $node1Exists = Test-ChefNodeExists -NodeName $Node1Alias
+  $node2Exists = Test-ChefNodeExists -NodeName $Node2Alias
+  if (-not ($node1Exists -and $node2Exists)) {
+    Write-Step 'One or more nodes missing in Chef Infra; running selective knife bootstrap'
+    $bootstrapTargets = @()
+    if (-not $node1Exists) { $bootstrapTargets += @{ Alias = $Node1Alias; Target = $ips.Node1 } }
+    if (-not $node2Exists) { $bootstrapTargets += @{ Alias = $Node2Alias; Target = $ips.Node2 } }
+    foreach ($item in $bootstrapTargets) {
+      Invoke-Checked -FilePath 'knife' -Arguments @(
+        'bootstrap', $item.Target,
+        '--yes',
+        '--connection-user', $ChefNodeUser,
+        '--node-name', $item.Alias,
+        '--ssh-identity-file', $SshPrivateKey,
+        '--ssh-verify-host-key', 'never',
+        '--sudo',
+        '--chef-license', 'accept-silent',
+        '--policy-group', $ChefPolicyGroup,
+        '--policy-name', $ChefPolicyName
+      ) -ErrorMessage "Knife bootstrap failed for $($item.Alias)"
+    }
+
+    Test-DsmRegistration
   }
-}
-
-Test-DsmRegistration
-else {
-  Write-Step 'Both nodes already exist in Chef Infra'
-}
-
-Write-Step 'Step 6: Validating Chef Infra policy assignment'
-$expectedNameNormalized = Normalize-PolicyName $ChefPolicyName
-foreach ($node in 'node1', 'node2') {
-  $currentName = Get-ChefNodePolicyValue -NodeName $node -FieldName 'policy_name'
-  $currentGroup = Get-ChefNodePolicyValue -NodeName $node -FieldName 'policy_group'
-  $currentNormalized = Normalize-PolicyName $currentName
-
-  if ([string]::IsNullOrWhiteSpace($currentName) -or [string]::IsNullOrWhiteSpace($currentGroup)) {
-    throw "Unable to read policy values for $node"
+  else {
+    Write-Step 'Both nodes already exist in Chef Infra'
   }
 
-  if ($currentNormalized -ne $expectedNameNormalized -or $currentGroup -ne $ChefPolicyGroup) {
-    Write-Step "Policy mismatch on $node; applying $ChefPolicyName/$ChefPolicyGroup"
-    Invoke-Checked -FilePath 'knife' -Arguments @('node', 'policy', 'set', $node, $ChefPolicyGroup, $ChefPolicyName) -ErrorMessage "Failed to set policy for $node"
+  Write-Step 'Step 6: Validating Chef Infra policy assignment'
+  $expectedNameNormalized = Normalize-PolicyName $ChefPolicyName
+  foreach ($node in $Node1Alias, $Node2Alias) {
     $currentName = Get-ChefNodePolicyValue -NodeName $node -FieldName 'policy_name'
     $currentGroup = Get-ChefNodePolicyValue -NodeName $node -FieldName 'policy_group'
     $currentNormalized = Normalize-PolicyName $currentName
-  }
-  if ($currentNormalized -ne $expectedNameNormalized -or $currentGroup -ne $ChefPolicyGroup) {
-    throw "Policy validation failed for $node. Found $currentName/$currentGroup expected $ChefPolicyName/$ChefPolicyGroup"
-  }
-}
 
-Write-Step 'Step 7: Running sudo chef-client on each node'
-$sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
-Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@$($ips.Node1)", 'sudo -n chef-client')) -ErrorMessage 'chef-client failed on node1'
-Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@$($ips.Node2)", 'sudo -n chef-client')) -ErrorMessage 'chef-client failed on node2'
+    if ([string]::IsNullOrWhiteSpace($currentName) -or [string]::IsNullOrWhiteSpace($currentGroup)) {
+      throw "Unable to read policy values for $node"
+    }
+
+    if ($currentNormalized -ne $expectedNameNormalized -or $currentGroup -ne $ChefPolicyGroup) {
+      Write-Step "Policy mismatch on $node; applying $ChefPolicyName/$ChefPolicyGroup"
+      Invoke-Checked -FilePath 'knife' -Arguments @('node', 'policy', 'set', $node, $ChefPolicyGroup, $ChefPolicyName) -ErrorMessage "Failed to set policy for $node"
+      $currentName = Get-ChefNodePolicyValue -NodeName $node -FieldName 'policy_name'
+      $currentGroup = Get-ChefNodePolicyValue -NodeName $node -FieldName 'policy_group'
+      $currentNormalized = Normalize-PolicyName $currentName
+    }
+    if ($currentNormalized -ne $expectedNameNormalized -or $currentGroup -ne $ChefPolicyGroup) {
+      throw "Policy validation failed for $node. Found $currentName/$currentGroup expected $ChefPolicyName/$ChefPolicyGroup"
+    }
+  }
+
+  Write-Step 'Step 7: Running sudo chef-client on each node'
+  $sshArgs = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=10', '-i', $SshPrivateKey)
+  Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@$($ips.Node1)", 'sudo -n chef-client')) -ErrorMessage "chef-client failed on $Node1Alias"
+  Invoke-Checked -FilePath 'ssh' -Arguments ($sshArgs + @("$ChefNodeUser@$($ips.Node2)", 'sudo -n chef-client')) -ErrorMessage "chef-client failed on $Node2Alias"
+}
+else {
+  # Chef 360 Node Management enrolls from the workstation, so the DSM path
+  # (bootstrap + chef-client + hosts-file SSH-by-name) is not required.
+  Write-Step "DSM workflow disabled (EnableDsmWorkflow=$EnableDsmWorkflow); skipping Chef Infra bootstrap, policy, and chef-client steps"
+}
 
 if ($EnableChef360Registration) {
   Write-Step 'Step 8: Registering nodes with Chef 360'
   if (-not (Test-Path -LiteralPath $RegisterChef360Script -PathType Leaf)) {
     throw "Chef 360 registration helper not found: $RegisterChef360Script"
   }
-  Invoke-Checked -FilePath 'bash' -Arguments @($RegisterChef360Script, $SshPrivateKey, $ChefNodeUser, 'node1', 'node2') -ErrorMessage 'Chef 360 registration script failed'
+  Invoke-Checked -FilePath 'bash' -Arguments @($RegisterChef360Script, $SshPrivateKey, $ChefNodeUser, $Node1Alias, $Node2Alias) -ErrorMessage 'Chef 360 registration script failed'
 }
 else {
   Write-Step 'Step 8: Chef 360 registration disabled'

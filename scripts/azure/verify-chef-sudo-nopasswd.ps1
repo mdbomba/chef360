@@ -93,7 +93,7 @@ foreach ($node in @($Node1Target, $Node2Target)) {
   if ($sudoOutput -notmatch 'NOPASSWD:\s*ALL') {
     throw "Passwordless sudo policy verification failed for $ChefNodeUser@$node"
   }
-  $command = 'set -euo pipefail; test "$(id -un)" = ''{0}''; command -v sshd >/dev/null; systemctl is-enabled ssh >/dev/null; systemctl is-active ssh >/dev/null; sudo test "$(stat -c ''%U:%G:%a'' /etc/sudoers.d/chef)" = ''root:root:440''; sudo test "$(cat /etc/sudoers.d/chef)" = ''{0} ALL=(ALL) NOPASSWD:ALL''; awk ''{{print $1 " " $2}}'' "$HOME/.ssh/authorized_keys" | grep -Fqx ''{1}''' -f $ChefNodeUser, $expectedKey
+  $command = 'set -euo pipefail; test "$(id -un)" = ''{0}''; command -v sshd >/dev/null; systemctl is-enabled ssh >/dev/null; systemctl is-active ssh >/dev/null; test "$(sudo stat -c ''%U:%G:%a'' /etc/sudoers.d/chef)" = ''root:root:440''; test "$(sudo cat /etc/sudoers.d/chef)" = ''{0} ALL=(ALL) NOPASSWD:ALL''; awk ''{{print $1 " " $2}}'' "$HOME/.ssh/authorized_keys" | grep -Fqx ''{1}''' -f $ChefNodeUser, $expectedKey
   Invoke-SshChecked -Target $node -Command $command -ErrorMessage "Node prerequisite validation failed for $ChefNodeUser@$node" | Out-Null
   Write-Step "Verified passwordless sudo for $ChefNodeUser@$node"
 }

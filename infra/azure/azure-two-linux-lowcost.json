@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.46.1.21595",
-      "templateHash": "18338746643062137848"
+      "templateHash": "9358317796823609191"
     }
   },
   "parameters": {
@@ -30,6 +30,16 @@
       "maxValue": 2,
       "metadata": {
         "description": "Number of Linux VMs to create."
+      }
+    },
+    "nodeAliases": {
+      "type": "array",
+      "defaultValue": [
+        "node1",
+        "node2"
+      ],
+      "metadata": {
+        "description": "Guest hostnames used inside each VM, in /etc/hosts and as osProfile.computerName. These are the node names Chef 360 records. Must contain exactly vmCount entries; the index matches the VM index."
       }
     },
     "adminUsername": {
@@ -221,7 +231,7 @@
       "ephemeral": "[parameters('ephemeral')]"
     },
     "vmIndices": "[range(0, parameters('vmCount'))]",
-    "linuxCloudInit": "[base64(format('#cloud-config\npackage_update: true\npackages:\n  - curl\n  - jq\n  - openssh-client\n  - openssh-server\nssh_pwauth: false\nwrite_files:\n  - path: /etc/sudoers.d/chef\n    permissions: ''0440''\n    owner: root:root\n    content: |\n      {0} ALL=(ALL) NOPASSWD:ALL\nruncmd:\n  - [ sh, -c, \"sed -i ''/[[:space:]]node1$/d; /[[:space:]]node2$/d'' /etc/hosts && printf ''%s\\\\tnode1\\\\n%s\\\\tnode2\\\\n'' ''{1}'' ''{2}'' >> /etc/hosts\" ]\n  - [ chmod, ''0440'', /etc/sudoers.d/chef ]\n  - [ visudo, -cf, /etc/sudoers.d/chef ]\n  - [ systemctl, enable, --now, ssh ]\n  - [ touch, /var/lib/chef360-template-ready ]\n', parameters('adminUsername'), variables('privateIpAddresses')[0], variables('privateIpAddresses')[1]))]"
+    "linuxCloudInit": "[base64(format('#cloud-config\npackage_update: true\npackages:\n  - curl\n  - jq\n  - openssh-client\n  - openssh-server\nssh_pwauth: false\nwrite_files:\n  - path: /etc/sudoers.d/chef\n    permissions: ''0440''\n    owner: root:root\n    content: |\n      {0} ALL=(ALL) NOPASSWD:ALL\nruncmd:\n  - [ sh, -c, \"sed -i ''/[[:space:]]{1}$/d; /[[:space:]]{2}$/d'' /etc/hosts && printf ''%s\\\\t{1}\\\\n%s\\\\t{2}\\\\n'' ''{3}'' ''{4}'' >> /etc/hosts\" ]\n  - [ chmod, ''0440'', /etc/sudoers.d/chef ]\n  - [ visudo, -cf /etc/sudoers.d/chef ]\n  - [ systemctl, enable, --now, ssh ]\n  - [ touch, /var/lib/chef360-template-ready ]\n', parameters('adminUsername'), parameters('nodeAliases')[0], parameters('nodeAliases')[1], variables('privateIpAddresses')[0], variables('privateIpAddresses')[1]))]"
   },
   "resources": [
     {
@@ -231,7 +241,7 @@
       "location": "[parameters('location')]",
       "tags": "[variables('tags')]",
       "properties": {
-        "securityRules": "[if(parameters('createPublicIp'), concat(createArray(createObject('name', 'allow-ssh', 'properties', createObject('priority', 1000, 'protocol', 'Tcp', 'access', 'Allow', 'direction', 'Inbound', 'sourceAddressPrefix', parameters('sshSourceCidr'), 'sourcePortRange', '*', 'destinationAddressPrefix', '*', 'destinationPortRange', '22')), createObject('name', 'allow-https', 'properties', createObject('priority', 1010, 'protocol', 'Tcp', 'access', 'Allow', 'direction', 'Inbound', 'sourceAddressPrefix', '*', 'sourcePortRange', '*', 'destinationAddressPrefix', '*', 'destinationPortRange', '443'))), if(empty(parameters('chef360SshSourceCidrs')), createArray(), createArray(createObject('name', 'allow-chef360-ssh', 'properties', createObject('priority', 1020, 'protocol', 'Tcp', 'access', 'Allow', 'direction', 'Inbound', 'sourceAddressPrefixes', parameters('chef360SshSourceCidrs'), 'sourcePortRange', '*', 'destinationAddressPrefix', '*', 'destinationPortRange', '22'))))), createArray())]"
+        "securityRules": "[if(parameters('createPublicIp'), concat(createArray(createObject('name', 'allow-ssh', 'properties', createObject('priority', 1000, 'protocol', 'Tcp', 'access', 'Allow', 'direction', 'Inbound', 'sourceAddressPrefix', parameters('sshSourceCidr'), 'sourcePortRange', '*', 'destinationAddressPrefix', '*', 'destinationPortRange', '22')), createObject('name', 'allow-workstation-all', 'properties', createObject('priority', 1010, 'protocol', '*', 'access', 'Allow', 'direction', 'Inbound', 'sourceAddressPrefix', parameters('sshSourceCidr'), 'sourcePortRange', '*', 'destinationAddressPrefix', '*', 'destinationPortRange', '*'))), if(empty(parameters('chef360SshSourceCidrs')), createArray(), createArray(createObject('name', 'allow-chef360-ssh', 'properties', createObject('priority', 1020, 'protocol', 'Tcp', 'access', 'Allow', 'direction', 'Inbound', 'sourceAddressPrefixes', parameters('chef360SshSourceCidrs'), 'sourcePortRange', '*', 'destinationAddressPrefix', '*', 'destinationPortRange', '22'))))), createArray())]"
       }
     },
     {
@@ -345,7 +355,7 @@
           }
         },
         "osProfile": {
-          "computerName": "[variables('vmNames')[copyIndex()]]",
+          "computerName": "[parameters('nodeAliases')[copyIndex()]]",
           "adminUsername": "[parameters('adminUsername')]",
           "customData": "[variables('linuxCloudInit')]",
           "linuxConfiguration": {
@@ -407,8 +417,12 @@
       "type": "array",
       "copy": {
         "count": "[length(variables('vmIndices'))]",
-        "input": "[format('{0} {1}', variables('privateIpAddresses')[variables('vmIndices')[copyIndex()]], variables('vmNames')[variables('vmIndices')[copyIndex()]])]"
+        "input": "[format('{0} {1}', variables('privateIpAddresses')[variables('vmIndices')[copyIndex()]], parameters('nodeAliases')[variables('vmIndices')[copyIndex()]])]"
       }
+    },
+    "nodeAliasesOut": {
+      "type": "array",
+      "value": "[parameters('nodeAliases')]"
     }
   }
 }
