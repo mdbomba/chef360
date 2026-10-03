@@ -141,18 +141,24 @@ Names.
 ## Download and Install
 
 The maintained helper `scripts/chef360/download-install-server.sh` downloads,
-extracts, and validates the package in online mode, then runs the installer. In
-air-gap mode it downloads and validates the package and stops so the artifacts
-and required Velero plugin images can be transferred to the disconnected host.
+extracts, and validates the package, then stops before installation so the
+operator can review inputs. It prompts only for the authorization code; the
+online versus air-gapped package is selected by setting `AIRGAP` near the top of
+the script, not by answering a prompt.
+
+This helper covers Integrated Install - Non-AirGap. Acquisition of installation
+material for the other three architectures is not automated; see
+`architecture/deployment-architectures.md`.
 
 ```bash
 chmod 700 download-install-server.sh
 ./download-install-server.sh
 ```
 
-Answer `N` or press Enter for the online package, then enter the authorization
-code when prompted. Do not proceed if `chef-360` or a non-empty `license.yaml`
-is missing after extraction. During installation, resolve preflight failures
+Leave `AIRGAP=false` for the online package, or set it to `true` to select the
+air-gapped package, then enter the authorization code when prompted. Do not
+proceed if `chef-360` or a non-empty `license.yaml` is missing after extraction.
+During installation, resolve preflight failures
 instead of bypassing them, create and confirm the Admin Console password,
 store it in the approved credential manager, and record the complete `Admin
 Console accessible at:` link returned by the installer.

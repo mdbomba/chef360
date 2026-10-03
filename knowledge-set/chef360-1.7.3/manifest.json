@@ -36,6 +36,12 @@
       "topics": ["kvm", "libvirt", "autoinstall", "netplan", "xfs", "tls", "mailpit", "installation"]
     },
     {
+      "id": "operations-download-licensing-journey",
+      "path": "operations/download-licensing-journey.md",
+      "title": "Chef Platform Download and Licensing Journey",
+      "topics": ["download", "licensing", "license", "airgap", "byok", "self-service", "serial", "portal", "installation", "operations"]
+    },
+    {
       "id": "operations-quick-start-installation",
       "path": "operations/quick-start-installation.md",
       "title": "Chef 360 1.7.3 Single-Node Hyperconverged Quick Start",
@@ -52,6 +58,12 @@
       "path": "architecture/overview.md",
       "title": "Platform Service Overview",
       "topics": ["services", "architecture", "components", "deployment"]
+    },
+    {
+      "id": "architecture-deployment-architectures",
+      "path": "architecture/deployment-architectures.md",
+      "title": "Chef 360 Deployment Architectures",
+      "topics": ["architecture", "integrated", "byok", "airgap", "kubernetes", "deployment", "automation", "installation"]
     },
     {
       "id": "architecture-access-controls",
@@ -189,6 +201,8 @@
     "lab-inventory",
     "infrastructure-planning",
     "installation-validation",
-    "quick-start-installation"
+    "quick-start-installation",
+    "download-and-licensing",
+    "deployment-architecture-selection"
   ]
 }

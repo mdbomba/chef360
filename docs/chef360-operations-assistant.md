@@ -4,8 +4,10 @@ This repository supports the complete operator path from installing Chef 360 to
 administering it through an authenticated management workstation:
 
 1. Install and validate a Chef 360 server.
-2. Install the Chef 360 CLIs and register the management workstation.
-3. Create or select a node cohort and enroll managed nodes.
+2. Install the Chef 360 CLIs and register the management workstation with
+   `chef-platform-auth-cli`. This must succeed before step 3.
+3. Create or select a node cohort and enroll managed nodes with
+   `chef-node-management-cli`.
 4. Inspect and operate Chef 360 using repository scripts, exact CLI references,
    and an interactive workspace assistant.
 
@@ -69,11 +71,19 @@ sudo scripts/chef360/validate-installation.sh \
   --tenant-url "$CHEF360_ENDPOINT"
 ```
 
-## 2. Register the Management Workstation
+## 2. Register the Management Workstation with Platform Auth
 
 Install the six Chef 360 CLIs from the server's bundled-tools endpoint when
 they are not already available. The reviewed KVM workflow automates this with
 `scripts/kvm/install-chef360-workstation-clis.sh`.
+
+This step is the gate for all of section 3. Registration authenticates the
+local device through `chef-platform-auth-cli`; every Node Management command
+later reuses that device profile. Do not substitute
+`chef-node-management-cli` for the checks below. The two CLIs are not
+interchangeable: Platform Auth describes this workstation and the authenticated
+identity, Node Management describes enrolled nodes. See
+`docs/chef360-cli-help/README.md` for the question-to-CLI mapping.
 
 Register a local profile through browser authorization:
 
@@ -86,11 +96,18 @@ tenant or organization role. Authorize the device as an existing user with the
 intended tenant, organization, and role. Use a distinct profile name for each
 context that must remain available locally.
 
+Verify the registered identity with `list-profile-names` and a scoped read such
+as `user-account self get-role --profile NAME`, which is what the script above
+does on success. Do not use `get-default-profile`, and do not add `--verbose` /
+`-v`: both can print stored access and secret keys in plaintext.
+
 For a lab with untrusted TLS, explicitly set `CHEF360_INSECURE=true` or pass
 `--insecure`. Prefer `CHEF360_CA_FILE` or `--cafile` whenever the CA is
 available.
 
 ## 3. Add Nodes to Node Management
+
+Requires a registered device profile from section 2.
 
 A cohort associates a skill assembly and override settings with enrolled nodes.
 Chef 360 1.7.3 normally creates built-in skill definitions and defaults during

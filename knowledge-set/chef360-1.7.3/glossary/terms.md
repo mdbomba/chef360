@@ -22,6 +22,8 @@
 
 **Bulk Enrollment**: Enrolling multiple nodes simultaneously.
 
+**BYOK (Bring-Your-Own-Kubernetes)**: A deployment architecture in which the customer provides an existing Kubernetes cluster for Chef 360 to connect to, rather than Chef 360 installing its own embedded cluster. Distinct from bring-your-own-key, which is a licensing arrangement. See `architecture/deployment-architectures.md`.
+
 ## C
 
 **Canister**: A containerized package for skills.
@@ -53,6 +55,10 @@
 **Gohai**: System information collection tool.
 
 ## I
+
+**Implicit Kubernetes**: See Integrated Install.
+
+**Integrated Install**: A deployment architecture in which the Replicated-based Chef 360 installer provisions and manages its own embedded Kubernetes environment. One of four deployment architectures, crossed with Non-AirGap or AirGap. See `architecture/deployment-architectures.md`.
 
 **Interpreter**: A service invoked by the Courier Runner to execute specific step types.
 
